@@ -79,16 +79,17 @@ export async function createTreatment(input: TreatmentInput): Promise<{ success:
 export async function updateTreatment(id: string, patientId: string, updates: Partial<TreatmentInput>): Promise<{ success: boolean; data?: Treatment; error?: string }> {
   const supabase = await createClient()
 
-  const dbUpdates: any = {}
-  if (updates.date !== undefined) dbUpdates.date = updates.date
-  if (updates.bodyParts !== undefined) dbUpdates.body_parts = updates.bodyParts
-  if (updates.methods !== undefined) dbUpdates.methods = updates.methods
-  if (updates.otherTreatmentMethod !== undefined) dbUpdates.other_treatment_method = updates.otherTreatmentMethod
-  if (updates.exerciseConcept !== undefined) dbUpdates.exercise_concept = updates.exerciseConcept
-  if (updates.exercises !== undefined) dbUpdates.exercises = updates.exercises
-  if (updates.homework !== undefined) dbUpdates.homework = updates.homework
-  if (updates.comment !== undefined) dbUpdates.comment = updates.comment
-  if (updates.flags !== undefined) dbUpdates.flags = updates.flags
+  // `in` 검사로 caller가 명시한 필드만 DB에 반영 (undefined도 명시적 clear로 인정)
+  const dbUpdates: Record<string, unknown> = {}
+  if ('date' in updates) dbUpdates.date = updates.date
+  if ('bodyParts' in updates) dbUpdates.body_parts = updates.bodyParts ?? null
+  if ('methods' in updates) dbUpdates.methods = updates.methods ?? null
+  if ('otherTreatmentMethod' in updates) dbUpdates.other_treatment_method = updates.otherTreatmentMethod ?? null
+  if ('exerciseConcept' in updates) dbUpdates.exercise_concept = updates.exerciseConcept ?? null
+  if ('exercises' in updates) dbUpdates.exercises = updates.exercises ?? null
+  if ('homework' in updates) dbUpdates.homework = updates.homework ?? null
+  if ('comment' in updates) dbUpdates.comment = updates.comment ?? null
+  if ('flags' in updates) dbUpdates.flags = updates.flags ?? null
 
   const { data, error } = await supabase
     .from('treatments')

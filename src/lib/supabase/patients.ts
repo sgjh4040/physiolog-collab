@@ -85,22 +85,23 @@ export async function updatePatient(id: string, updates: Partial<PatientInput>):
   const supabase = await createClient()
 
   // camelCase 업데이트 데이터를 snake_case로 변환
-  const dbUpdates: any = {}
-  if (updates.name !== undefined) dbUpdates.name = updates.name
-  if (updates.birthDate !== undefined) dbUpdates.birth_date = updates.birthDate
-  if (updates.gender !== undefined) dbUpdates.gender = updates.gender
-  if (updates.phone !== undefined) dbUpdates.phone = updates.phone
-  if (updates.address !== undefined) dbUpdates.address = updates.address
-  if (updates.referralRoute !== undefined) dbUpdates.referral_route = updates.referralRoute
-  if (updates.medicalHistory !== undefined) dbUpdates.medical_history = updates.medicalHistory
-  if (updates.otherMedicalHistory !== undefined) dbUpdates.other_medical_history = updates.otherMedicalHistory
-  if (updates.diagnosis !== undefined) dbUpdates.diagnosis = updates.diagnosis
-  if (updates.surgeryHistory !== undefined) dbUpdates.surgery_history = updates.surgeryHistory
-  if (updates.insurance !== undefined) dbUpdates.insurance = updates.insurance
-  if (updates.notes !== undefined) dbUpdates.notes = updates.notes
-  if (updates.treatmentStartDate !== undefined) dbUpdates.treatment_start_date = updates.treatmentStartDate
-  if (updates.therapist !== undefined) dbUpdates.therapist = updates.therapist
-  if (updates.status !== undefined) dbUpdates.status = updates.status
+  // `in` 검사로 caller가 명시한 필드만 DB에 반영 (undefined도 명시적 clear로 인정)
+  const dbUpdates: Record<string, unknown> = {}
+  if ('name' in updates) dbUpdates.name = updates.name ?? null
+  if ('birthDate' in updates) dbUpdates.birth_date = updates.birthDate ?? null
+  if ('gender' in updates) dbUpdates.gender = updates.gender ?? null
+  if ('phone' in updates) dbUpdates.phone = updates.phone ?? null
+  if ('address' in updates) dbUpdates.address = updates.address ?? null
+  if ('referralRoute' in updates) dbUpdates.referral_route = updates.referralRoute ?? null
+  if ('medicalHistory' in updates) dbUpdates.medical_history = updates.medicalHistory ?? null
+  if ('otherMedicalHistory' in updates) dbUpdates.other_medical_history = updates.otherMedicalHistory ?? null
+  if ('diagnosis' in updates) dbUpdates.diagnosis = updates.diagnosis ?? null
+  if ('surgeryHistory' in updates) dbUpdates.surgery_history = updates.surgeryHistory ?? null
+  if ('insurance' in updates) dbUpdates.insurance = updates.insurance ?? null
+  if ('notes' in updates) dbUpdates.notes = updates.notes ?? null
+  if ('treatmentStartDate' in updates) dbUpdates.treatment_start_date = updates.treatmentStartDate ?? null
+  if ('therapist' in updates) dbUpdates.therapist = updates.therapist ?? null
+  if ('status' in updates) dbUpdates.status = updates.status ?? null
 
   const { data, error } = await supabase
     .from('patients')

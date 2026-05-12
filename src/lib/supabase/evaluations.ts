@@ -77,14 +77,16 @@ export async function createEvaluation(input: EvaluationInput): Promise<{ succes
 export async function updateEvaluation(id: string, patientId: string, updates: Partial<EvaluationInput>): Promise<{ success: boolean; data?: Evaluation; error?: string }> {
   const supabase = await createClient()
 
-  const dbUpdates: any = {}
-  if (updates.date !== undefined) dbUpdates.date = updates.date
-  if (updates.vas !== undefined) dbUpdates.vas = updates.vas
-  if (updates.rom !== undefined) dbUpdates.rom = updates.rom
-  if (updates.mmt !== undefined) dbUpdates.mmt = updates.mmt
-  if (updates.bodyMeasurement !== undefined) dbUpdates.body_measurement = updates.bodyMeasurement
-  if (updates.painMapping !== undefined) dbUpdates.pain_mapping = updates.painMapping
-  if (updates.custom !== undefined) dbUpdates.custom = updates.custom
+  // `in` 검사로 caller가 명시한 필드만 DB에 반영
+  // undefined를 보내면 명시적 clear로 해석해 null로 설정 → 토글 OFF 시 옛 값이 남는 버그 방지
+  const dbUpdates: Record<string, unknown> = {}
+  if ('date' in updates) dbUpdates.date = updates.date
+  if ('vas' in updates) dbUpdates.vas = updates.vas ?? null
+  if ('rom' in updates) dbUpdates.rom = updates.rom ?? null
+  if ('mmt' in updates) dbUpdates.mmt = updates.mmt ?? null
+  if ('bodyMeasurement' in updates) dbUpdates.body_measurement = updates.bodyMeasurement ?? null
+  if ('painMapping' in updates) dbUpdates.pain_mapping = updates.painMapping ?? null
+  if ('custom' in updates) dbUpdates.custom = updates.custom ?? null
 
   const { data, error } = await supabase
     .from('evaluations')
