@@ -183,8 +183,8 @@ export function EvaluationDetailSheet({
                       ))}
                     </div>
                     
-                    <div className="mt-6 flex flex-col items-center pointer-events-none border-t pt-6 bg-slate-50/50 rounded-b-xl">
-                      <p className="text-[10px] text-muted-foreground mb-2">통증 부위 가시화</p>
+                    <div className="mt-6 flex flex-col items-center border-t pt-6 bg-slate-50/50 rounded-b-xl">
+                      <p className="text-[10px] text-muted-foreground mb-2">통증 부위 가시화 — 앞면/뒷면 토글 가능</p>
                       <div className="w-full max-w-[220px]">
                         <BodyMap
                           value={evaluation.painMapping}
