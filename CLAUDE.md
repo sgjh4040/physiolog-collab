@@ -171,11 +171,16 @@ src/
 - 스크린샷 촬영 시 별도 허락 없이 실행 가능
 - localhost:3000 접근 허용
 - 작업 중간 상태는 묻지 말고 최종만 보고
+- **dev 서버는 내가 직접 관리** (사용자 부담 X, rom-detector 스타일):
+  1. 캡처 필요 → 서버 꺼져있으면 `npm run dev`를 background로 실행
+  2. `curl http://localhost:3000`이 200 응답할 때까지 대기 후 캡처
+  3. 캡처 끝나면 `pkill -f "next-server|next dev"`로 정리
 - **검증 끝나면 즉시 정리:**
   1. `browser_close`로 탭 종료
-  2. 띄운 dev/preview 서버 정리는 사용자가 직접 관리하는 `npm run dev`이면 건드리지 X
+  2. dev 서버 kill (위 3번)
   3. 잔존 프로세스 정리: `pkill -f "playwright-mcp|mcp-chrome"`
-- 사용자가 "유지해달라"고 명시하지 않는 한 켜둔 채 방치 X
+- **단, 사용자가 자기 터미널에서 이미 dev 서버 켜놨다면 그대로 사용 — 새로 안 켜고 kill도 안 함.** 켜져있나는 매번 `curl`로 확인.
+- 사용자가 "유지해달라"고 명시하면 작업 후 dev 서버 그대로 둠
 
 ### 인증 필요한 페이지 캡처
 - AuthGuard로 보호되는 모든 페이지(`/`, `/patients/*`, `/statistics`, `/profile`)는 로그인 상태 필요
