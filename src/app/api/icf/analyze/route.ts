@@ -1,49 +1,64 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
 import { ICF_SYSTEM_PROMPT } from '@/data/icf-system-prompt'
+import { createClient } from '@/lib/supabase/server'
+import { buildPatientContext } from '@/features/icf/domain/patient-context'
 
 // 시스템 프롬프트는 서버 코드에 고정 — 사용자 입력으로 절대 변경 불가
+// API 키는 서버 환경변수(ANTHROPIC_API_KEY)에서만 읽어옴 — 클라이언트 BYOK 미지원
+// 인증된(로그인) 사용자만 호출 가능 — 세션 체크 필수
+// 환자 컨텍스트(기본정보 + 최근 평가 + 최근 치료)는 서버에서 fetch해서 system prompt에 자동 주입
 
 interface ApiMessage {
   role: 'user' | 'assistant'
   content: string
 }
 
-export async function POST(req: NextRequest) {
-  const authHeader = req.headers.get('Authorization')
-  const userKey = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
-  const apiKey = userKey ?? process.env.ANTHROPIC_API_KEY
+const MODEL_ID = 'claude-sonnet-4-6'
 
-  if (!apiKey || apiKey === 'your_api_key_here') {
+export async function POST(req: NextRequest) {
+  // 1. 세션 체크 — 로그인된 사용자만 허용
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 })
+  }
+
+  // 2. 서버 환경변수에서만 API 키 사용
+  const apiKey = process.env.ANTHROPIC_API_KEY
+  if (!apiKey) {
     return NextResponse.json(
-      { error: 'API 키가 없습니다. 설정(⚙️)에서 Anthropic API 키를 입력해주세요.' },
-      { status: 401 },
+      { error: 'AI 평가 기능이 비활성화되어 있습니다. 관리자에게 문의해주세요.' },
+      { status: 503 },
     )
   }
 
-  const body = await req.json() as { input: string; history?: ApiMessage[]; context?: string }
-  const { input, history = [], context } = body
-
+  // 3. 입력 검증
+  const body = await req.json() as { input: string; history?: ApiMessage[]; patientId?: string }
+  const { input, history = [], patientId } = body
   if (!input?.trim()) {
     return NextResponse.json({ error: '입력값이 없습니다.' }, { status: 400 })
   }
 
-  const client = new Anthropic({ apiKey })
-  
-  const messages: ApiMessage[] = []
-  
-  // 첫 대화일 때 컨텍스트가 있으면 삽입
-  if (history.length === 0 && context) {
-    messages.push({ role: 'user', content: `[환자 컨텍스트]\n${context}\n\n위 정보를 바탕으로 다음 입력을 분석해줘: ${input}` })
-  } else {
-    messages.push(...history, { role: 'user', content: input })
+  // 4. 환자 컨텍스트 주입 (실패해도 분석 자체는 진행)
+  let systemPrompt = ICF_SYSTEM_PROMPT
+  if (patientId) {
+    try {
+      const ctx = await buildPatientContext(patientId)
+      if (ctx) systemPrompt = `${ICF_SYSTEM_PROMPT}\n\n${ctx}`
+    } catch (err) {
+      console.error('Failed to build patient context, falling back to base prompt:', err)
+    }
   }
+
+  const client = new Anthropic({ apiKey })
+  const messages: ApiMessage[] = [...history, { role: 'user', content: input }]
 
   try {
     const response = await client.messages.create({
-      model: 'claude-3-7-sonnet-latest',
+      model: MODEL_ID,
       max_tokens: 2048,
-      system: ICF_SYSTEM_PROMPT,
+      system: systemPrompt,
       messages,
     })
 
@@ -59,10 +74,10 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     if (err instanceof Anthropic.APIError) {
       const msg = err.status === 400 && err.message.includes('credit')
-        ? '크레딧이 부족합니다. console.anthropic.com → Plans & Billing에서 충전해주세요.'
+        ? 'AI 사용량 한도에 도달했습니다. 관리자에게 문의해주세요.'
         : err.status === 401
-        ? 'API 키가 유효하지 않습니다. 설정에서 키를 다시 확인해주세요.'
-        : `API 오류 (${err.status}): ${err.message}`
+        ? 'AI 평가 설정에 문제가 있습니다. 관리자에게 문의해주세요.'
+        : `AI 분석 오류 (${err.status})`
       return NextResponse.json({ error: msg }, { status: err.status ?? 500 })
     }
     return NextResponse.json({ error: '알 수 없는 오류가 발생했습니다.' }, { status: 500 })

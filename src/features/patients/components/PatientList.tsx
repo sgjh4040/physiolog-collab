@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { Plus, Search, Users } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { ApiKeyDialog } from '@/components/ApiKeyDialog'
 import { PatientCard } from './PatientCard'
 import { treatmentStore, evaluationStore } from '@/lib/storage'
 import { getProfile, logout } from '@/lib/supabase/actions'
@@ -238,7 +237,6 @@ export function PatientList() {
           >
             {isSelectionMode ? <X className="h-4 w-4" /> : <Edit3 className="h-4 w-4 text-muted-foreground" />}
           </Button>
-          <ApiKeyDialog />
           <Button variant="ghost" size="icon" onClick={handleLogout} title="로그아웃" className="h-9 w-9">
             <LogOut className="h-4 w-4 text-muted-foreground" />
           </Button>

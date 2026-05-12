@@ -3,17 +3,15 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Loader2, Sparkles, MessageSquare, Save, RefreshCw, X, Info } from 'lucide-react'
+import { Loader2, Sparkles, MessageSquare, Save, RefreshCw, Info } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { IcfDomainCard } from './IcfDomainCard'
-import { getApiKey } from '@/lib/storage/api-settings'
 import { createIcfAssessment } from '@/lib/supabase/icf'
 import { getPatient } from '@/lib/supabase/patients'
 import { getEvaluations } from '@/lib/supabase/evaluations'
-import { formatPatientContext } from '../lib/icf-utils'
 import { mergeDomains, DOMAIN_KEYS, type IcfTurn, type IcfAnalysisResult } from '@/features/icf/domain/types'
 import type { Patient } from '@/features/patients/domain/types'
 import type { Evaluation } from '@/features/evaluations/domain/types'
@@ -62,8 +60,6 @@ export function IcfAssessmentForm({ patientId }: Props) {
   const [currentResult, setCurrentResult] = useState<IcfAnalysisResult | null>(null)
   const [patient, setPatient] = useState<Patient | null>(null)
   const [evaluations, setEvaluations] = useState<Evaluation[]>([])
-  const [context, setContext] = useState<string>('')
-
   useEffect(() => {
     async function loadData() {
       const p = await getPatient(patientId)
@@ -71,7 +67,6 @@ export function IcfAssessmentForm({ patientId }: Props) {
       if (p) {
         setPatient(p)
         setEvaluations(evs)
-        setContext(formatPatientContext(p, evs))
       }
     }
     loadData()
@@ -85,18 +80,10 @@ export function IcfAssessmentForm({ patientId }: Props) {
 
     const newHistory: ApiMessage[] = [...history, { role: 'user', content: userInput }]
 
-    const apiKey = getApiKey()
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-    if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`
-
     const res = await fetch('/api/icf/analyze', {
       method: 'POST',
-      headers,
-      body: JSON.stringify({ 
-        input: userInput, 
-        history,
-        context: history.length === 0 ? context : undefined // 첫 요청에만 컨텍스트 포함
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ input: userInput, history, patientId }),
     })
 
     let data: { result?: IcfAnalysisResult; error?: string; assistantMessage?: string }
@@ -182,36 +169,25 @@ export function IcfAssessmentForm({ patientId }: Props) {
               환자와의 초기 상담, 임상 관찰, 수행 관찰 내용을 자유롭게 적어주세요. AI가 5개 영역으로 분류합니다.
             </p>
           </div>
-          <div className="relative">
-            <Textarea
-              placeholder={`예시:\n40대 남성, 공장 라인 근무. 3주 전 허리를 삐끗한 후 요통 발생. VAS 7/10. 허리 굽히기 어려워 신발 신기, 물건 줍기 어려움. 빨리 직장에 복귀하고 싶어함. 가족은 안정을 권유 중.`}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              rows={6}
-              className="resize-none text-sm pr-10 focus-visible:ring-primary/30"
-            />
-            {input && (
-              <button
-                onClick={() => setInput('')}
-                className="absolute right-3 top-3 rounded-full p-1 text-muted-foreground transition hover:bg-muted hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
+
+          <div className="flex items-start gap-2 rounded-md border border-blue-100 bg-blue-50/60 px-3 py-2 text-xs text-blue-800">
+            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-500" />
+            <div>
+              <span className="font-semibold">환자 컨텍스트 자동 참고</span>
+              <span className="ml-1 text-blue-700/90">
+                — 이 환자의 기본정보 · 최근 평가 1건 · 최근 치료 1건을 AI에게 자동 전달합니다. 새로 관찰한 내용 위주로 입력하세요.
+              </span>
+            </div>
           </div>
 
-          {context && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex items-center gap-2 rounded-lg bg-primary/5 px-3 py-2 border border-primary/10"
-            >
-              <Info className="h-3.5 w-3.5 text-primary" />
-              <p className="text-[11px] text-primary/80 font-medium">환자 기본 정보 및 최근 검사 기록이 분석에 자동 포함됩니다.</p>
-            </motion.div>
-          )}
-
-          <Button onClick={handleInitialSubmit} disabled={!input.trim()} className="w-full gap-2 shadow-lg shadow-primary/20 h-11 text-base font-semibold">
+          <Textarea
+            placeholder={`예시:\n40대 남성, 공장 라인 근무. 3주 전 허리를 삐끗한 후 요통 발생. VAS 7/10. 허리 굽히기 어려워 신발 신기, 물건 줍기 어려움. 빨리 직장에 복귀하고 싶어함. 가족은 안정을 권유 중.`}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            rows={6}
+            className="resize-none text-sm"
+          />
+          <Button onClick={handleInitialSubmit} disabled={!input.trim()} className="w-full gap-2 shadow-lg shadow-primary/20">
             <Sparkles className="h-4 w-4" />
             분석 시작
           </Button>

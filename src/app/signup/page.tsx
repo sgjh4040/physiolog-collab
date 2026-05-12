@@ -84,7 +84,7 @@ export default function SignupPage() {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="4자 이상 입력"
+                  placeholder="6자 이상 입력"
                   className="pl-10 h-11 bg-background/50 border-muted focus:ring-primary/20"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}

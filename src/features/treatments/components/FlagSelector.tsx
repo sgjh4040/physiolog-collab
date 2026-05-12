@@ -65,9 +65,10 @@ export function FlagSelector() {
               {isSelected && <Check className="w-3.5 h-3.5" />}
               {flag}
               {!isSelected && (
-                <span 
+                <span
                   onClick={(e) => handleDelete(e, flag)}
-                  className="ml-0.5 opacity-0 group-hover:opacity-100 hover:text-destructive p-0.5"
+                  className="ml-0.5 hover:text-destructive p-1 -m-1"
+                  aria-label={`${flag} 플래그 삭제`}
                 >
                   <X className="w-3 h-3" />
                 </span>
