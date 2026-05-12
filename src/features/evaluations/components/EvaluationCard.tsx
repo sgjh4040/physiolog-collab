@@ -72,7 +72,7 @@ export function EvaluationCard({
               type="button"
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0 text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+              className="h-8 w-8 p-0 text-muted-foreground opacity-100 sm:opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive sm:group-hover:opacity-100"
               onClick={(e) => {
                 e.stopPropagation()
                 onDelete(evaluation.id)
