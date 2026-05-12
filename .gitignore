@@ -48,3 +48,7 @@ next-env.d.ts
 .playwright-mcp-artifacts/
 playwright-report/
 test-results/
+
+# PWA — serwist 빌드 산출물
+public/sw.js
+public/swe-worker-*.js
