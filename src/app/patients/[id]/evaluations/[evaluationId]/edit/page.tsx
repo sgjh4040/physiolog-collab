@@ -31,7 +31,7 @@ export default function EditEvaluationPage({ params }: PageProps) {
   async function handleSubmit(values: EvaluationFormValues) {
     const result = await updateEvaluation(evaluationId, patientId, {
       date: values.date,
-      vas: (values.toggleVas || values.togglePainMapping) ? values.vas : undefined,
+      vas: values.toggleVas || values.togglePainMapping ? values.vas : undefined,
       rom: values.toggleRom ? values.rom : undefined,
       mmt: values.toggleMmt
         ? values.mmt.map((m) => ({ ...m, grade: m.grade as MMTGrade }))

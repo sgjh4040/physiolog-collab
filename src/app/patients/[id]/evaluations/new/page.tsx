@@ -31,7 +31,7 @@ export default function NewEvaluationPage({ params }: PageProps) {
     const input: EvaluationInput = {
       patientId,
       date: values.date,
-      vas: (values.toggleVas || values.togglePainMapping) ? values.vas : undefined,
+      vas: values.toggleVas || values.togglePainMapping ? values.vas : undefined,
       rom: values.toggleRom ? values.rom : undefined,
       mmt: values.toggleMmt
         ? values.mmt.map((m) => ({ ...m, grade: m.grade as MMTGrade }))
