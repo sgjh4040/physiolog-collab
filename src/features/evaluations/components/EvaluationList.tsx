@@ -11,6 +11,7 @@ import { EvaluationDetailSheet } from './EvaluationDetailSheet'
 import { GraphSettingsDialog } from './GraphSettingsDialog'
 import { evaluationStore } from '@/lib/storage'
 import { getEvaluations, deleteEvaluation } from '@/lib/supabase/evaluations'
+import { useConfirm } from '@/components/confirm-dialog'
 import type {
   Evaluation,
   GraphMetric,
@@ -26,6 +27,7 @@ export function EvaluationList({ patientId }: Props) {
   
   const [isSelectionMode, setIsSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const confirm = useConfirm()
 
   const loadEvaluations = async () => {
     const data = await getEvaluations(patientId)
@@ -47,7 +49,13 @@ export function EvaluationList({ patientId }: Props) {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('이 검사를 삭제할까요?')) return
+    const ok = await confirm({
+      title: '이 검사를 삭제할까요?',
+      description: '되돌릴 수 없습니다.',
+      confirmText: '삭제',
+      variant: 'destructive',
+    })
+    if (!ok) return
     await deleteEvaluation(id, patientId)
     await loadEvaluations()
     setSelected(null)
@@ -55,7 +63,13 @@ export function EvaluationList({ patientId }: Props) {
 
   const handleBatchDelete = async () => {
     if (selectedIds.size === 0) return
-    if (!confirm(`선택한 ${selectedIds.size}건의 검사 기록을 삭제할까요?`)) return
+    const ok = await confirm({
+      title: `선택한 ${selectedIds.size}건의 검사 기록을 삭제할까요?`,
+      description: '되돌릴 수 없습니다.',
+      confirmText: '삭제',
+      variant: 'destructive',
+    })
+    if (!ok) return
     
     for (const id of selectedIds) {
       await deleteEvaluation(id, patientId)

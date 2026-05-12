@@ -22,6 +22,7 @@ import {
 import { TreatmentCard } from './TreatmentCard'
 import { TreatmentDetailSheet } from './TreatmentDetailSheet'
 import { getTreatments, deleteTreatment } from '@/lib/supabase/treatments'
+import { useConfirm } from '@/components/confirm-dialog'
 import { formatDateShort } from '@/lib/utils/date'
 import { BODY_REGION_LABEL } from '@/data/body-parts'
 import type { Treatment } from '@/features/treatments/domain/types'
@@ -38,6 +39,7 @@ export function TreatmentList({ patientId }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   const router = useRouter()
+  const confirm = useConfirm()
 
   const loadTreatments = async () => {
     const data = await getTreatments(patientId)
@@ -55,7 +57,13 @@ export function TreatmentList({ patientId }: Props) {
   const hasAny = treatments.length > 0
 
   const handleDelete = async (id: string) => {
-    if (!confirm('이 치료를 삭제할까요?')) return
+    const ok = await confirm({
+      title: '이 치료를 삭제할까요?',
+      description: '되돌릴 수 없습니다.',
+      confirmText: '삭제',
+      variant: 'destructive',
+    })
+    if (!ok) return
     await deleteTreatment(id, patientId)
     await loadTreatments()
     setSelected(null)
@@ -63,7 +71,13 @@ export function TreatmentList({ patientId }: Props) {
 
   const handleBatchDelete = async () => {
     if (selectedIds.size === 0) return
-    if (!confirm(`선택한 ${selectedIds.size}건의 치료 기록을 삭제할까요?`)) return
+    const ok = await confirm({
+      title: `선택한 ${selectedIds.size}건의 치료 기록을 삭제할까요?`,
+      description: '되돌릴 수 없습니다.',
+      confirmText: '삭제',
+      variant: 'destructive',
+    })
+    if (!ok) return
     
     for (const id of selectedIds) {
       await deleteTreatment(id, patientId)

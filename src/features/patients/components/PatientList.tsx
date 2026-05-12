@@ -13,6 +13,7 @@ import { getLatestTreatment } from '@/lib/supabase/treatments'
 import { LogOut, Trash2, CheckCircle, CheckSquare, Square, X, BarChart2, ArrowUpDown, UserCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { useConfirm } from '@/components/confirm-dialog'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Select,
@@ -36,6 +37,7 @@ export function PatientList() {
   const [latestDates, setLatestDates] = useState<Record<string, string>>({})
 
   const router = useRouter()
+  const confirm = useConfirm()
 
   useEffect(() => {
     // 서버에서 환자 목록 및 최근 치료 날짜 가져오기
@@ -82,15 +84,18 @@ export function PatientList() {
   }
 
   const handleLogout = async () => {
-    if (confirm('로그아웃 하시겠습니까?')) {
-      try {
-        await logout()
-        toast.info('로그아웃 되었습니다.')
-        router.replace('/login')
-      } catch (error) {
-        console.error('로그아웃 오류:', error)
-        // 리다이렉트 에러 등 무시
-      }
+    const ok = await confirm({
+      title: '로그아웃 하시겠습니까?',
+      confirmText: '로그아웃',
+    })
+    if (!ok) return
+    try {
+      await logout()
+      toast.info('로그아웃 되었습니다.')
+      router.replace('/login')
+    } catch (error) {
+      console.error('로그아웃 오류:', error)
+      // 리다이렉트 에러 등 무시
     }
   }
 
@@ -109,7 +114,13 @@ export function PatientList() {
   }
 
   const handleBatchDelete = async () => {
-    if (!confirm(`${selectedIds.length}명의 환자 정보를 완전히 삭제할까요?`)) return
+    const ok = await confirm({
+      title: `${selectedIds.length}명의 환자 정보를 완전히 삭제할까요?`,
+      description: '환자별 치료 기록·평가 기록도 함께 사라집니다. 되돌릴 수 없습니다.',
+      confirmText: '삭제',
+      variant: 'destructive',
+    })
+    if (!ok) return
     
     setIsSelectionMode(false) // UI 잠금
     
@@ -123,7 +134,12 @@ export function PatientList() {
   }
 
   const handleBatchMoveToClosed = async () => {
-    if (!confirm(`${selectedIds.length}명의 환자를 '종결' 상태로 변경할까요?`)) return
+    const ok = await confirm({
+      title: `${selectedIds.length}명의 환자를 '종결' 상태로 변경할까요?`,
+      description: '"치료 중" 탭에서는 더 이상 보이지 않습니다. 나중에 다시 활성화할 수 있습니다.',
+      confirmText: '종결',
+    })
+    if (!ok) return
     
     setIsSelectionMode(false)
     

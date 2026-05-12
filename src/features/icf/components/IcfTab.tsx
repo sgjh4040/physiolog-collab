@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { IcfDomainCard } from './IcfDomainCard'
 import { getIcfAssessments, deleteIcfAssessment } from '@/lib/supabase/icf'
+import { useConfirm } from '@/components/confirm-dialog'
 import { DOMAIN_KEYS, DOMAIN_META, type IcfAssessment } from '@/features/icf/domain/types'
 import { cn } from '@/lib/utils'
 
@@ -19,6 +20,7 @@ export function IcfTab({ patientId }: Props) {
   
   const [isSelectionMode, setIsSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const confirm = useConfirm()
 
   const loadAssessments = async () => {
     setAssessments(await getIcfAssessments(patientId))
@@ -33,7 +35,13 @@ export function IcfTab({ patientId }: Props) {
   }, [patientId])
 
   const handleDelete = async (id: string) => {
-    if (!confirm('이 평가를 삭제할까요?')) return
+    const ok = await confirm({
+      title: '이 평가를 삭제할까요?',
+      description: '되돌릴 수 없습니다.',
+      confirmText: '삭제',
+      variant: 'destructive',
+    })
+    if (!ok) return
     await deleteIcfAssessment(id, patientId)
     await loadAssessments()
     if (expanded === id) setExpanded(null)
@@ -42,7 +50,13 @@ export function IcfTab({ patientId }: Props) {
 
   const handleBatchDelete = async () => {
     if (selectedIds.size === 0) return
-    if (!confirm(`선택한 ${selectedIds.size}건의 평가 기록을 삭제할까요?`)) return
+    const ok = await confirm({
+      title: `선택한 ${selectedIds.size}건의 평가 기록을 삭제할까요?`,
+      description: '되돌릴 수 없습니다.',
+      confirmText: '삭제',
+      variant: 'destructive',
+    })
+    if (!ok) return
     
     for (const id of selectedIds) {
       await deleteIcfAssessment(id, patientId)

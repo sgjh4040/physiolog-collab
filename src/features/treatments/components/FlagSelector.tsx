@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { flagStore } from '@/lib/storage'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { useConfirm } from '@/components/confirm-dialog'
 import type { TreatmentFormValues } from '@/features/treatments/domain/schema'
 
 export function FlagSelector() {
@@ -12,6 +13,7 @@ export function FlagSelector() {
   const selectedFlags = watch('flags') ?? []
   const [availableFlags, setAvailableFlags] = useState<string[]>([])
   const [newFlagName, setNewFlagName] = useState('')
+  const confirm = useConfirm()
 
   useEffect(() => {
     setAvailableFlags(flagStore.getFlags())
@@ -35,9 +37,15 @@ export function FlagSelector() {
     setNewFlagName('')
   }
 
-  const handleDelete = (e: React.MouseEvent, flag: string) => {
+  const handleDelete = async (e: React.MouseEvent, flag: string) => {
     e.stopPropagation()
-    if (!confirm(`'${flag}' 플래그를 삭제할까요?`)) return
+    const ok = await confirm({
+      title: `'${flag}' 플래그를 삭제할까요?`,
+      description: '저장된 플래그 목록에서 제거됩니다. 기존 치료기록에 이미 적용된 값은 그대로 유지됩니다.',
+      confirmText: '삭제',
+      variant: 'destructive',
+    })
+    if (!ok) return
     flagStore.deleteFlag(flag)
     setAvailableFlags(flagStore.getFlags())
     // 선택되어 있었다면 선택 해제
