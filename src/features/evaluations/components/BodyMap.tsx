@@ -49,6 +49,16 @@ const BODY_PARTS = [
   { id: 'hamstring_r', label: '오른쪽 허벅지(뒤)', side: 'back', d: 'M50,115 L35,115 L28,150 L48,150 Z' },
   { id: 'calf_l', label: '왼쪽 종아리(뒤)', side: 'back', d: 'M52,160 L70,160 L75,192 L60,192 Z' },
   { id: 'calf_r', label: '오른쪽 종아리(뒤)', side: 'back', d: 'M48,160 L30,160 L25,192 L40,192 Z' },
+  // 뒷면 팔 (앞면 좌표 동일 — 의료영상 관행상 환자 좌/우 = 화면 우/좌, 뒤집기 X)
+  { id: 'arm_up_l_back', label: '왼쪽 상완(뒤)', side: 'back', d: 'M80,45 L88,70 L78,75 L70,52 Z' },
+  { id: 'arm_up_r_back', label: '오른쪽 상완(뒤)', side: 'back', d: 'M20,45 L12,70 L22,75 L30,52 Z' },
+  { id: 'forearm_l_back', label: '왼쪽 하완(뒤)', side: 'back', d: 'M88,70 L95,105 L85,110 L78,75 Z' },
+  { id: 'forearm_r_back', label: '오른쪽 하완(뒤)', side: 'back', d: 'M12,70 L5,105 L15,110 L22,75 Z' },
+  { id: 'hand_l_back', label: '왼쪽 손(뒤)', side: 'back', d: 'M95,105 C98,110 100,115 98,125 L88,125 C85,115 85,110 85,105 Z' },
+  { id: 'hand_r_back', label: '오른쪽 손(뒤)', side: 'back', d: 'M5,105 C2,110 0,115 2,125 L12,125 C15,115 15,110 15,105 Z' },
+  // 뒷면 발
+  { id: 'foot_l_back', label: '왼쪽 발(뒤)', side: 'back', d: 'M60,192 L75,192 C78,197 80,200 78,207 L60,207 Z' },
+  { id: 'foot_r_back', label: '오른쪽 발(뒤)', side: 'back', d: 'M40,192 L25,192 C22,197 20,200 22,207 L40,207 Z' },
 ]
 
 type Props = {
