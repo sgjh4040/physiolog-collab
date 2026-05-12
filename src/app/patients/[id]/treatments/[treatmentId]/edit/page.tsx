@@ -11,6 +11,7 @@ import { getTreatment, updateTreatment } from '@/lib/supabase/treatments'
 import type { TreatmentFormValues } from '@/features/treatments/domain/schema'
 import type { Patient } from '@/features/patients/domain/types'
 import type { Treatment } from '@/features/treatments/domain/types'
+import { LoadingScreen } from '@/components/loading-screen'
 
 type PageProps = { params: Promise<{ id: string; treatmentId: string }> }
 
@@ -49,11 +50,7 @@ export default function EditTreatmentPage({ params }: PageProps) {
   }
 
   if (patient === undefined || treatment === undefined) {
-    return (
-      <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-        불러오는 중…
-      </div>
-    )
+    return <LoadingScreen />
   }
 
   if (patient === null || treatment === null) {

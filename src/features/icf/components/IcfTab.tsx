@@ -10,6 +10,7 @@ import { getIcfAssessments, deleteIcfAssessment } from '@/lib/supabase/icf'
 import { useConfirm } from '@/components/confirm-dialog'
 import { DOMAIN_KEYS, DOMAIN_META, type IcfAssessment } from '@/features/icf/domain/types'
 import { cn } from '@/lib/utils'
+import { LoadingScreen } from '@/components/loading-screen'
 
 type Props = { patientId: string }
 
@@ -84,7 +85,7 @@ export function IcfTab({ patientId }: Props) {
   }
 
   if (!hydrated) {
-    return <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">불러오는 중…</div>
+    return <LoadingScreen className="min-h-32 flex-none py-6" />
   }
 
   const hasAny = assessments.length > 0

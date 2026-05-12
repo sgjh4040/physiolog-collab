@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { User, Building, Briefcase, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { LoadingScreen } from '@/components/loading-screen'
 
 export default function ProfilePage() {
   const [name, setName] = useState('')
@@ -53,7 +54,7 @@ export default function ProfilePage() {
   }
 
   if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center">로딩 중...</div>
+    return <LoadingScreen fullScreen />
   }
 
   return (

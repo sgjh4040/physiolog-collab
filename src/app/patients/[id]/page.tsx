@@ -12,6 +12,7 @@ import { EvaluationList } from '@/features/evaluations/components/EvaluationList
 import { IcfTab } from '@/features/icf/components/IcfTab'
 import { getPatient } from '@/lib/supabase/patients'
 import type { Patient } from '@/features/patients/domain/types'
+import { LoadingScreen } from '@/components/loading-screen'
 
 type PageProps = { params: Promise<{ id: string }> }
 
@@ -47,11 +48,7 @@ export default function PatientDetailPage({ params }: PageProps) {
   }, [tabFromUrl])
 
   if (patient === undefined) {
-    return (
-      <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-        불러오는 중…
-      </div>
-    )
+    return <LoadingScreen />
   }
 
   if (patient === null) {

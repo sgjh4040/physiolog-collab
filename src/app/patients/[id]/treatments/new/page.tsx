@@ -15,6 +15,7 @@ import type { TreatmentFormValues } from '@/features/treatments/domain/schema'
 import type { Treatment } from '@/features/treatments/domain/types'
 import { toISODate } from '@/lib/utils/date'
 import type { Patient } from '@/features/patients/domain/types'
+import { LoadingScreen } from '@/components/loading-screen'
 
 type PageProps = { params: Promise<{ id: string }> }
 
@@ -90,11 +91,7 @@ export default function NewTreatmentPage({ params }: PageProps) {
   }
 
   if (patient === undefined) {
-    return (
-      <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-        불러오는 중…
-      </div>
-    )
+    return <LoadingScreen />
   }
 
   if (patient === null) {

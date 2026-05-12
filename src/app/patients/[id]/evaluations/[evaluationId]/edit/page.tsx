@@ -11,6 +11,7 @@ import { getEvaluation, updateEvaluation } from '@/lib/supabase/evaluations'
 import type { EvaluationFormValues } from '@/features/evaluations/domain/schema'
 import type { Patient } from '@/features/patients/domain/types'
 import type { Evaluation, MMTGrade } from '@/features/evaluations/domain/types'
+import { LoadingScreen } from '@/components/loading-screen'
 
 type PageProps = { params: Promise<{ id: string; evaluationId: string }> }
 
@@ -50,11 +51,7 @@ export default function EditEvaluationPage({ params }: PageProps) {
   }
 
   if (patient === undefined || evaluation === undefined) {
-    return (
-      <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-        불러오는 중…
-      </div>
-    )
+    return <LoadingScreen />
   }
 
   if (patient === null || evaluation === null) {

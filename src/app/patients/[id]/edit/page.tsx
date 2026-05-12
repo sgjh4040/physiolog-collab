@@ -9,6 +9,7 @@ import { PatientForm } from '@/features/patients/components/PatientForm'
 import { getPatient, updatePatient } from '@/lib/supabase/patients'
 import type { PatientFormValues } from '@/features/patients/domain/schema'
 import type { Patient } from '@/features/patients/domain/types'
+import { LoadingScreen } from '@/components/loading-screen'
 
 type PageProps = { params: Promise<{ id: string }> }
 
@@ -35,11 +36,7 @@ export default function EditPatientPage({ params }: PageProps) {
   }
 
   if (patient === undefined) {
-    return (
-      <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-        불러오는 중…
-      </div>
-    )
+    return <LoadingScreen />
   }
 
   if (patient === null) {

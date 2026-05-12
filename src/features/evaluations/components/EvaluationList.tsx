@@ -12,6 +12,7 @@ import { GraphSettingsDialog } from './GraphSettingsDialog'
 import { evaluationStore } from '@/lib/storage'
 import { getEvaluations, deleteEvaluation } from '@/lib/supabase/evaluations'
 import { useConfirm } from '@/components/confirm-dialog'
+import { LoadingScreen } from '@/components/loading-screen'
 import type {
   Evaluation,
   GraphMetric,
@@ -112,9 +113,7 @@ export function EvaluationList({ patientId }: Props) {
         </div>
 
         {!hydrated ? (
-          <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
-            불러오는 중…
-          </div>
+          <LoadingScreen className="min-h-32 flex-none py-6" />
         ) : graphMetrics.length === 0 ? (
           <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground leading-relaxed">
             표시할 그래프가 없습니다.<br />

@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card'
 import { getPatients } from '@/lib/supabase/patients'
 import { getIcfAssessments } from '@/lib/supabase/icf'
 import { DOMAIN_META, type IcfDomainKey, type IcfAssessment } from '@/features/icf/domain/types'
+import { LoadingScreen } from '@/components/loading-screen'
 
 export default function StatisticsPage() {
   const [hydrated, setHydrated] = useState(false)
@@ -64,7 +65,7 @@ export default function StatisticsPage() {
     loadStats()
   }, [])
 
-  if (!hydrated) return <div className="flex justify-center items-center h-screen text-muted-foreground text-sm">불러오는 중...</div>
+  if (!hydrated) return <LoadingScreen fullScreen />
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4 pb-24 min-h-screen bg-slate-50/50">
