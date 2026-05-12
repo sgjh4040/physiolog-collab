@@ -141,6 +141,53 @@ src/
 - 모든 폼은 react-hook-form + zod 검증
 - localStorage 직접 접근 금지 → 항상 `lib/storage/` 래퍼 경유
 
+## UI 작업 규칙
+
+### "UI 수정"의 정의
+페이지/컴포넌트 렌더 결과가 바뀌는 모든 변경 (CSS, JSX 구조, 레이아웃, 색상, 텍스트 등).
+**로직/데이터/API만 변경되고 화면이 안 바뀌면 적용 안 함.**
+
+### 필수 절차 (UI 수정에만 적용)
+1. 코드 수정
+2. Playwright MCP로 스크린샷 촬영 (규칙 아래)
+3. 스크린샷 보여주고 승인 요청
+4. 승인 후 다음 작업
+
+**예외:** 사용자가 "쭉 진행" / "일괄" 등을 명시하면 중간 승인 생략하고 최종 결과만 한 번에 보고.
+
+### 스크린샷 규칙
+- **형식:** JPG (`type: "jpeg"`)
+- **범위:**
+  - 반응형 영향 있는 변경 → 데스크톱(1440x900) + 모바일(390x844) 둘 다
+  - 한쪽만 영향 → 해당 뷰포트만
+- **캡처 방식:** `fullPage: true` 우선. 타임아웃 나면 viewport 단위 여러 장.
+- **파일명:** `screenshot_after_{작업명}.jpg` (예: `screenshot_after_login_button_color.jpg`)
+- **저장 위치:**
+  - 승인용(임시): 프로젝트 루트
+  - 승인 후: `~/.claude/projects/-Users-jeonghunsakong-Projects-physiolog-collab/memory/screenshots/YYYY-MM-DD-주제/`
+- 필요 시 작업 전에도 한 장 찍어 Before/After 비교
+
+### Playwright MCP 운영 규칙
+- 스크린샷 촬영 시 별도 허락 없이 실행 가능
+- localhost:3000 접근 허용
+- 작업 중간 상태는 묻지 말고 최종만 보고
+- **검증 끝나면 즉시 정리:**
+  1. `browser_close`로 탭 종료
+  2. 띄운 dev/preview 서버 정리는 사용자가 직접 관리하는 `npm run dev`이면 건드리지 X
+  3. 잔존 프로세스 정리: `pkill -f "playwright-mcp|mcp-chrome"`
+- 사용자가 "유지해달라"고 명시하지 않는 한 켜둔 채 방치 X
+
+### 인증 필요한 페이지 캡처
+- AuthGuard로 보호되는 모든 페이지(`/`, `/patients/*`, `/statistics`, `/profile`)는 로그인 상태 필요
+- Playwright로 캡처 시 먼저 `/login`에서 로그인 흐름 자동화 후 진입
+- 테스트 계정: 사용자가 dev Supabase에 만든 계정 사용 (별도 보관)
+
+### 적용 예시
+- "버튼 색깔 바꿔줘" → UI 수정 ✅ 스크린샷 필수
+- "useState 로직 정리해줘" (화면 동일) → UI 수정 X, 스크린샷 생략
+- "텍스트만 한 글자 바꿔줘" → UI 수정 ✅ 스크린샷 필수 (작아도 렌더 결과 바뀜)
+- "타입 에러 수정" (런타임 동일) → UI 수정 X, 스크린샷 생략
+
 ## 작업 순서 (계획)
 1. ✅ 프로젝트 셋업 (Next.js + shadcn/ui + 패키지)
 2. 폴더 구조 + 타입 정의 (Patient, Treatment, Evaluation)

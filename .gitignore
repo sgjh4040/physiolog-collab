@@ -30,6 +30,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# Playwright MCP — 브라우저 자동화 시 생성되는 임시 로그/스냅샷
+.playwright-mcp/
+
 # env files (can opt-in for committing if needed)
 .env*
 
