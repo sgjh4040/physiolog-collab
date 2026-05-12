@@ -8,16 +8,13 @@ import { getSession } from '@/lib/supabase/actions'
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
-  const [mounted, setMounted] = useState(false)
   const [isVerified, setIsVerified] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
-    
     const checkAuth = async () => {
       const session = await getSession()
       const isPublicPage = pathname === '/login' || pathname === '/signup'
-      
+
       if (!session && !isPublicPage) {
         router.replace('/login')
       } else {
@@ -26,10 +23,9 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     }
 
     checkAuth()
-  }, [pathname, router])
-
-  // 서버 렌더링 중이거나 하이드레이션 전에는 빈 화면 또는 최소한의 UI 출력
-  if (!mounted) return null
+  // router는 stable reference이므로 deps에서 제외
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname])
 
   const isPublicPage = pathname === '/login' || pathname === '/signup'
 
