@@ -63,6 +63,8 @@ export function PatientForm({
   onCancel,
 }: Props) {
   const form = useForm<PatientFormValues, unknown, PatientFormValues>({
+    // zod 4.x + react-hook-form 7.x 호환성 이슈 — known issue
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(patientFormSchema) as any,
     defaultValues: { ...EMPTY_DEFAULTS, ...defaultValues },
   })

@@ -70,9 +70,9 @@ export function PatientList() {
     loadUser()
     
     // 저장된 정렬 기준 불러오기
-    const savedSort = localStorage.getItem('physiolog_patient_sort') as any
+    const savedSort = localStorage.getItem('physiolog_patient_sort')
     if (savedSort && ['name', 'status', 'recent', 'created'].includes(savedSort)) {
-      setSortBy(savedSort)
+      setSortBy(savedSort as 'name' | 'status' | 'recent' | 'created')
     }
     
     setHydrated(true)

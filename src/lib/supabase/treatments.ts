@@ -2,7 +2,29 @@
 
 import { createClient } from './server'
 import { revalidatePath } from 'next/cache'
-import type { Treatment, TreatmentInput } from '@/features/treatments/domain/types'
+import type {
+  Treatment,
+  TreatmentInput,
+  BodyPart,
+  TreatmentMethod,
+  ExerciseConcept,
+  Exercise,
+} from '@/features/treatments/domain/types'
+
+type TreatmentRow = {
+  id: string
+  patient_id: string
+  date: string
+  body_parts: BodyPart[] | null
+  methods: TreatmentMethod[] | null
+  other_treatment_method: string | null
+  exercise_concept: ExerciseConcept | null
+  exercises: Exercise[] | null
+  homework: string | null
+  comment: string | null
+  flags: string[] | null
+  created_at: string
+}
 
 // 특정 환자의 치료 기록 목록 조회
 export async function getTreatments(patientId: string): Promise<Treatment[]> {
@@ -149,19 +171,19 @@ export async function getLatestTreatment(patientId: string): Promise<Treatment |
 }
 
 // DB snake_case -> 앱 camelCase 변환
-function dbToTreatment(dbRecord: any): Treatment {
+function dbToTreatment(dbRecord: TreatmentRow): Treatment {
   return {
     id: dbRecord.id,
     patientId: dbRecord.patient_id,
     date: dbRecord.date,
-    bodyParts: dbRecord.body_parts || [],
-    methods: dbRecord.methods || [],
-    otherTreatmentMethod: dbRecord.other_treatment_method,
-    exerciseConcept: dbRecord.exercise_concept,
-    exercises: dbRecord.exercises || [],
-    homework: dbRecord.homework,
-    comment: dbRecord.comment,
-    flags: dbRecord.flags || [],
+    bodyParts: dbRecord.body_parts ?? [],
+    methods: dbRecord.methods ?? [],
+    otherTreatmentMethod: dbRecord.other_treatment_method ?? undefined,
+    exerciseConcept: dbRecord.exercise_concept ?? undefined,
+    exercises: dbRecord.exercises ?? [],
+    homework: dbRecord.homework ?? undefined,
+    comment: dbRecord.comment ?? undefined,
+    flags: dbRecord.flags ?? [],
     createdAt: dbRecord.created_at,
   }
 }

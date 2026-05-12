@@ -2,7 +2,17 @@
 
 import { createClient } from './server'
 import { revalidatePath } from 'next/cache'
-import type { IcfAssessment } from '@/features/icf/domain/types'
+import type { IcfAssessment, IcfTurn, IcfDomains } from '@/features/icf/domain/types'
+
+type IcfRow = {
+  id: string
+  patient_id: string
+  date: string
+  turns: IcfTurn[] | null
+  final_domains: IcfDomains | null
+  final_note: string | null
+  created_at: string
+}
 
 // 특정 환자의 ICF 평가 기록 목록 조회
 export async function getIcfAssessments(patientId: string): Promise<IcfAssessment[]> {
@@ -77,14 +87,14 @@ export async function deleteIcfAssessment(id: string, patientId: string): Promis
 }
 
 // DB snake_case -> 앱 camelCase 변환
-function dbToIcf(dbRecord: any): IcfAssessment {
+function dbToIcf(dbRecord: IcfRow): IcfAssessment {
   return {
     id: dbRecord.id,
     patientId: dbRecord.patient_id,
     date: dbRecord.date,
-    turns: dbRecord.turns || [],
-    finalDomains: dbRecord.final_domains || { body: [], activity: [], participation: [], environment: [], personal: [] },
-    finalNote: dbRecord.final_note || '',
+    turns: dbRecord.turns ?? [],
+    finalDomains: dbRecord.final_domains ?? { body: [], activity: [], participation: [], environment: [], personal: [] },
+    finalNote: dbRecord.final_note ?? '',
     createdAt: dbRecord.created_at,
   }
 }

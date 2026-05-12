@@ -2,7 +2,28 @@
 
 import { createClient } from './server'
 import { revalidatePath } from 'next/cache'
-import type { Evaluation, EvaluationInput } from '@/features/evaluations/domain/types'
+import type {
+  Evaluation,
+  EvaluationInput,
+  ROMRecord,
+  MMTRecord,
+  BodyMeasurement,
+  PainArea,
+  CustomEval,
+} from '@/features/evaluations/domain/types'
+
+type EvaluationRow = {
+  id: string
+  patient_id: string
+  date: string
+  vas: number | null
+  rom: ROMRecord[] | null
+  mmt: MMTRecord[] | null
+  body_measurement: BodyMeasurement[] | null
+  pain_mapping: PainArea[] | null
+  custom: CustomEval[] | null
+  created_at: string
+}
 
 // 특정 환자의 검사 기록 목록 조회
 export async function getEvaluations(patientId: string): Promise<Evaluation[]> {
@@ -127,17 +148,17 @@ export async function deleteEvaluation(id: string, patientId: string): Promise<{
 }
 
 // DB snake_case -> 앱 camelCase 변환
-function dbToEvaluation(dbRecord: any): Evaluation {
+function dbToEvaluation(dbRecord: EvaluationRow): Evaluation {
   return {
     id: dbRecord.id,
     patientId: dbRecord.patient_id,
     date: dbRecord.date,
-    vas: dbRecord.vas,
-    rom: dbRecord.rom,
-    mmt: dbRecord.mmt,
-    bodyMeasurement: dbRecord.body_measurement,
-    painMapping: dbRecord.pain_mapping,
-    custom: dbRecord.custom,
+    vas: dbRecord.vas ?? undefined,
+    rom: dbRecord.rom ?? undefined,
+    mmt: dbRecord.mmt ?? undefined,
+    bodyMeasurement: dbRecord.body_measurement ?? undefined,
+    painMapping: dbRecord.pain_mapping ?? undefined,
+    custom: dbRecord.custom ?? undefined,
     createdAt: dbRecord.created_at,
   }
 }

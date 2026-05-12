@@ -150,10 +150,11 @@ export default function MigrationPage() {
       toast.success('모든 데이터가 성공적으로 클라우드에 이전되었습니다!')
       addLog('🎉 마이그레이션 대성공! 이제 안전하게 클라우드에서 데이터를 사용할 수 있습니다.')
       
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err)
       toast.error('마이그레이션 중 오류가 발생했습니다.')
-      addLog(`❌ 오류 발생: ${err.message}`)
+      const message = err instanceof Error ? err.message : '알 수 없는 오류'
+      addLog(`❌ 오류 발생: ${message}`)
     } finally {
       setIsMigrating(false)
     }

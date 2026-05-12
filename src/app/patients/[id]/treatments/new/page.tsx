@@ -12,6 +12,7 @@ import {
 import { getPatient } from '@/lib/supabase/patients'
 import { getTreatment, getLatestTreatment, createTreatment } from '@/lib/supabase/treatments'
 import type { TreatmentFormValues } from '@/features/treatments/domain/schema'
+import type { Treatment } from '@/features/treatments/domain/types'
 import { toISODate } from '@/lib/utils/date'
 import type { Patient } from '@/features/patients/domain/types'
 
@@ -32,7 +33,7 @@ export default function NewTreatmentPage({ params }: PageProps) {
       setPatient(await getPatient(patientId))
       
       const copyFromId = searchParams.get('copyFrom')
-      let sourceRecord: any = null
+      let sourceRecord: Treatment | null = null
 
       if (copyFromId) {
         sourceRecord = await getTreatment(copyFromId)
@@ -43,7 +44,7 @@ export default function NewTreatmentPage({ params }: PageProps) {
       if (sourceRecord) {
         setDefaults({
           date: toISODate(),
-          bodyParts: sourceRecord.bodyParts.map((p: any) => ({
+          bodyParts: sourceRecord.bodyParts.map((p) => ({
             region: p.region,
             side: p.side ?? 'both',
             muscles: p.muscles ?? [],
@@ -51,7 +52,7 @@ export default function NewTreatmentPage({ params }: PageProps) {
           methods: sourceRecord.methods,
           otherTreatmentMethod: sourceRecord.otherTreatmentMethod,
           exerciseConcept: sourceRecord.exerciseConcept,
-          exercises: (sourceRecord.exercises ?? []).map((e: any) => ({
+          exercises: (sourceRecord.exercises ?? []).map((e) => ({
             id: e.id,
             name: e.name,
             intensity: e.intensity ?? '',

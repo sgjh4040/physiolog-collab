@@ -43,7 +43,11 @@ export function TreatmentForm({
   onCancel,
 }: Props) {
   const form = useForm<TreatmentFormValues>({
+    // zod 4.x + react-hook-form 7.x 호환성 이슈 — 정확한 타입은 zod typeof 추론과
+    // resolver 제네릭 미스매치라 known issue. https://github.com/react-hook-form/resolvers/issues
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(treatmentFormSchema) as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     defaultValues: { ...EMPTY_DEFAULTS, ...defaultValues } as any,
     mode: 'onSubmit',
   })
@@ -51,6 +55,7 @@ export function TreatmentForm({
   // 비동기로 넘어온 defaultValues를 반영하기 위해 reset 사용
   useEffect(() => {
     if (defaultValues && Object.keys(defaultValues).length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       form.reset({ ...EMPTY_DEFAULTS, ...defaultValues } as any)
     }
   }, [defaultValues, form])

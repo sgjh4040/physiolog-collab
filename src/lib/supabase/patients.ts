@@ -2,7 +2,34 @@
 
 import { createClient } from './server'
 import { revalidatePath } from 'next/cache'
-import type { Patient, PatientInput } from '@/features/patients/domain/types'
+import type {
+  Patient,
+  PatientInput,
+  Gender,
+  InsuranceType,
+  PatientStatus,
+} from '@/features/patients/domain/types'
+
+type PatientRow = {
+  id: string
+  name: string
+  birth_date: string | null
+  gender: Gender | null
+  phone: string | null
+  address: string | null
+  referral_route: string | null
+  medical_history: string[] | null
+  other_medical_history: string | null
+  diagnosis: string | null
+  surgery_history: string | null
+  insurance: InsuranceType | null
+  notes: string | null
+  treatment_start_date: string | null
+  therapist: string | null
+  status: PatientStatus
+  created_at: string
+  updated_at: string
+}
 
 // 환자 목록 조회 (자신이 등록한 환자만)
 export async function getPatients(): Promise<Patient[]> {
@@ -142,23 +169,23 @@ export async function deletePatient(id: string): Promise<{ success: boolean; err
 }
 
 // 헬퍼 함수: DB snake_case 포맷을 앱의 camelCase Patient 타입으로 변환
-function dbToPatient(dbRecord: any): Patient {
+function dbToPatient(dbRecord: PatientRow): Patient {
   return {
     id: dbRecord.id,
     name: dbRecord.name,
-    birthDate: dbRecord.birth_date,
-    gender: dbRecord.gender,
-    phone: dbRecord.phone,
-    address: dbRecord.address,
-    referralRoute: dbRecord.referral_route,
-    medicalHistory: dbRecord.medical_history || [],
-    otherMedicalHistory: dbRecord.other_medical_history,
-    diagnosis: dbRecord.diagnosis,
-    surgeryHistory: dbRecord.surgery_history,
-    insurance: dbRecord.insurance,
-    notes: dbRecord.notes,
-    treatmentStartDate: dbRecord.treatment_start_date,
-    therapist: dbRecord.therapist,
+    birthDate: dbRecord.birth_date ?? '',
+    gender: (dbRecord.gender ?? 'male') as Gender,
+    phone: dbRecord.phone ?? '',
+    address: dbRecord.address ?? '',
+    referralRoute: dbRecord.referral_route ?? '',
+    medicalHistory: dbRecord.medical_history ?? [],
+    otherMedicalHistory: dbRecord.other_medical_history ?? undefined,
+    diagnosis: dbRecord.diagnosis ?? '',
+    surgeryHistory: dbRecord.surgery_history ?? undefined,
+    insurance: (dbRecord.insurance ?? 'none') as InsuranceType,
+    notes: dbRecord.notes ?? undefined,
+    treatmentStartDate: dbRecord.treatment_start_date ?? '',
+    therapist: dbRecord.therapist ?? '',
     status: dbRecord.status,
     createdAt: dbRecord.created_at,
     updatedAt: dbRecord.updated_at,

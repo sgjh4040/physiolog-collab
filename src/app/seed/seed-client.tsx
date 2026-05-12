@@ -108,8 +108,9 @@ export default function SeedClient() {
       }
 
       setStatus('모든 데이터 생성 완료!')
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : '알 수 없는 오류'
+      setError(message)
       console.error(err)
     } finally {
       setLoading(false)
