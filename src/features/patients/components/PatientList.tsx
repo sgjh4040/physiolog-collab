@@ -41,9 +41,13 @@ export function PatientList() {
 
   useEffect(() => {
     // 서버에서 환자 목록 및 최근 치료 날짜 가져오기
+    // hydrated 신호는 환자 목록 도착 시점에 켜야 EmptyState 깜빡임이 안 생김.
+    // (이전: setHydrated가 fetch 시작과 동시에 동기 호출되어 patients=[] 상태로
+    //  "등록된 환자가 아직 없습니다"가 잠깐 표시되는 race 발생)
     const fetchPatients = async () => {
       const data = await getPatients()
       setPatients(data)
+      setHydrated(true)
 
       const datesMap: Record<string, string> = {}
       for (const p of data) {
@@ -55,7 +59,7 @@ export function PatientList() {
       setLatestDates(datesMap)
     }
     fetchPatients()
-    
+
     // 서버에서 프로필 정보 가져오기
     const loadUser = async () => {
       const profile = await getProfile()
@@ -68,16 +72,13 @@ export function PatientList() {
       }
     }
     loadUser()
-    
+
     // 저장된 정렬 기준 불러오기 — localStorage 동기화
     const savedSort = localStorage.getItem('physiolog_patient_sort')
     if (savedSort && ['name', 'status', 'recent', 'created'].includes(savedSort)) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSortBy(savedSort as 'name' | 'status' | 'recent' | 'created')
     }
-
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setHydrated(true)
   }, [])
 
   const handleSortChange = (val: 'name' | 'status' | 'recent' | 'created') => {
