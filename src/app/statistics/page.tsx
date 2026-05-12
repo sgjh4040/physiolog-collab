@@ -152,7 +152,7 @@ export default function StatisticsPage() {
           <h3 className="font-bold uppercase tracking-widest text-xs">Clinical Philosophy</h3>
         </div>
         <p className="text-sm text-slate-300 leading-relaxed italic">
-          "우리는 진단명이라는 라벨에만 집중하지 않습니다. 환자가 자신의 삶 속에서 어떻게 기능하고 참여하는지, 그 실질적인 '삶의 변화'를 추적하는 것이 physiolog의 진정한 전문성입니다."
+          {'"우리는 진단명이라는 라벨에만 집중하지 않습니다. 환자가 자신의 삶 속에서 어떻게 기능하고 참여하는지, 그 실질적인 \'삶의 변화\'를 추적하는 것이 physiolog의 진정한 전문성입니다."'}
         </p>
         <div className="mt-5 pt-5 border-t border-white/10 flex justify-between items-end">
           <div className="space-y-1">

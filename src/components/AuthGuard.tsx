@@ -46,7 +46,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
           <div className="flex flex-col gap-4">
             <p className="text-xl font-medium tracking-tight text-foreground/80 break-keep leading-relaxed italic">
-              "정확한 평가는 치료의 가장 <span className="text-primary font-bold decoration-primary/40 underline underline-offset-8">정직한 지도(Map)</span>가 됩니다."
+              {'"정확한 평가는 치료의 가장 '}<span className="text-primary font-bold decoration-primary/40 underline underline-offset-8">정직한 지도(Map)</span>{'가 됩니다."'}
             </p>
             <div className="mx-auto h-[1px] w-16 bg-gradient-to-r from-transparent via-muted-foreground/30 to-transparent" />
           </div>

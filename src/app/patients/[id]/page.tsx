@@ -25,7 +25,9 @@ export default function PatientDetailPage({ params }: PageProps) {
   const [patient, setPatient] = useState<Patient | null | undefined>(undefined)
 
   useEffect(() => {
+    // Supabase에서 환자 fetch 후 동기화 — 외부 시스템 동기화
     async function load() {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPatient(await getPatient(id))
     }
     load()
@@ -36,7 +38,9 @@ export default function PatientDetailPage({ params }: PageProps) {
   const [tab, setTab] = useState(initialTab)
 
   useEffect(() => {
+    // URL search param 변경 시 탭 동기화 — 외부(URL) → 내부 state
     if (tabFromUrl && VALID_TABS.has(tabFromUrl) && tabFromUrl !== tab) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTab(tabFromUrl)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -20,7 +20,8 @@ export default function MigrationPage() {
   const router = useRouter()
 
   useEffect(() => {
-    // 로컬 데이터 개수 확인
+    // localStorage(patient/treatment store)에서 통계 집계 — 외부 시스템 동기화
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setStats({
       patients: patientStore.getAllPatients().length,
       treatments: patientStore.getAllPatients().reduce((acc, p) => acc + treatmentStore.getTreatments(p.id).length, 0),

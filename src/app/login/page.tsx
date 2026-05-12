@@ -27,10 +27,12 @@ export default function LoginPage() {
       }
     })
 
-    // 저장된 아이디 불러오기
+    // 저장된 아이디 불러오기 — localStorage(외부 시스템) 동기화
     const savedEmail = localStorage.getItem(ID_STORAGE_KEY)
     if (savedEmail) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEmail(savedEmail)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRememberId(true)
     }
   }, [router])

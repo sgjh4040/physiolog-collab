@@ -72,7 +72,7 @@ export default function SeedClient() {
 
         // 3. Create Treatments (2-3 times a week from 2026-01-01 to 2026-05-11)
         const treatments = []
-        let currentDate = new Date('2026-01-01')
+        const currentDate = new Date('2026-01-01')
         const endDate = new Date('2026-05-11')
         
         // Randomize session days for each patient (e.g., [1,3,5] or [2,4] etc.)

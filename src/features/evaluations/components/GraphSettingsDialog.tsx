@@ -32,7 +32,9 @@ export function GraphSettingsDialog({ evaluations, selected, onChange }: Props) 
   const [draft, setDraft] = useState<Set<string>>(new Set())
 
   useEffect(() => {
+    // open prop 변경 시 draft를 selected로 재초기화 — 외부 prop 동기화
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDraft(new Set(selected.map(metricKey)))
     }
   }, [open, selected])

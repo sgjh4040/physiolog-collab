@@ -69,12 +69,14 @@ export function PatientList() {
     }
     loadUser()
     
-    // 저장된 정렬 기준 불러오기
+    // 저장된 정렬 기준 불러오기 — localStorage 동기화
     const savedSort = localStorage.getItem('physiolog_patient_sort')
     if (savedSort && ['name', 'status', 'recent', 'created'].includes(savedSort)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSortBy(savedSort as 'name' | 'status' | 'recent' | 'created')
     }
-    
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHydrated(true)
   }, [])
 
@@ -156,6 +158,8 @@ export function PatientList() {
     return latestDates
   }, [latestDates])
 
+  // React Compiler가 자동 메모이즈하지만 명시적 useMemo도 유지 (호환 의도, 향후 컴파일러 정착 시 제거 검토)
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const filtered = useMemo(() => {
     let result = patients
 
@@ -342,7 +346,7 @@ export function PatientList() {
           Professional Clinical Standard
         </p>
         <p className="text-xs italic leading-relaxed break-keep px-8">
-          "정확한 평가는 치료의 가장 정직한 지도(Map)가 됩니다."
+          {'"정확한 평가는 치료의 가장 정직한 지도(Map)가 됩니다."'}
         </p>
       </footer>
 

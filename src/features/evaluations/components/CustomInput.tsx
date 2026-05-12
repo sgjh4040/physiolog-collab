@@ -16,6 +16,8 @@ export function CustomInput() {
 
   const [favorites, setFavorites] = useState<FavoriteEvaluationEntry[]>([])
   useEffect(() => {
+    // localStorage(favorites store)에서 초기값 로드 — 외부 시스템 동기화
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFavorites(evaluationFavoritesStore.getSortedEvaluationFavorites())
   }, [])
 

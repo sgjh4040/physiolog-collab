@@ -16,6 +16,8 @@ export function FlagSelector() {
   const confirm = useConfirm()
 
   useEffect(() => {
+    // localStorage(flagStore)에서 초기값 로드 — 외부 시스템 동기화
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAvailableFlags(flagStore.getFlags())
   }, [])
 
