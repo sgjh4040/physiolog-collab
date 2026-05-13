@@ -44,6 +44,20 @@ export function BodyMap({ value, onChange, readOnly = false, gender = 'male' }: 
     [value]
   )
 
+  // 우리 painMapping의 side는 anatomical position(환자 기준 좌/우). 라이브러리는 view 무관하게
+  // path.left = 화면 왼쪽 path로 정의해서 앞면에서 환자 좌/우가 반대로 표시됨. 의료 표준에 맞춰
+  // 앞면일 때만 swap. 뒷면은 그대로 (환자 등 뒤에서 보는 시점이라 화면 좌/우 = 환자 좌/우).
+  const toLibSide = (anatomicalSide?: LibSide): LibSide | undefined => {
+    if (!anatomicalSide) return undefined
+    if (view === 'back') return anatomicalSide
+    return anatomicalSide === 'left' ? 'right' : 'left'
+  }
+  const fromLibSide = (libSide?: 'left' | 'right'): LibSide | undefined => {
+    if (!libSide) return undefined
+    if (view === 'back') return libSide
+    return libSide === 'left' ? 'right' : 'left'
+  }
+
   // 라이브러리에 넘길 데이터 — painMapping 중 라이브러리 slug로 변환 가능한 것만.
   // SVG 색칠은 양상별 색상(PATTERN_COLOR_HEX)으로 — color 필드가 라이브러리 우선순위에서
   // intensity보다 위에 있어 색상 명시 시 그라데이션 무시됨.
@@ -93,14 +107,14 @@ export function BodyMap({ value, onChange, readOnly = false, gender = 'male' }: 
         parts.push({
           slug: slug as ExtendedBodyPart['slug'],
           intensity: sides.left.intensity,
-          side: 'left',
+          side: toLibSide('left'),
           color: PATTERN_COLOR_HEX[sides.left.pattern],
         })
       } else if (sides.right) {
         parts.push({
           slug: slug as ExtendedBodyPart['slug'],
           intensity: sides.right.intensity,
-          side: 'right',
+          side: toLibSide('right'),
           color: PATTERN_COLOR_HEX[sides.right.pattern],
         })
       } else if (sides.central) {
@@ -112,7 +126,8 @@ export function BodyMap({ value, onChange, readOnly = false, gender = 'male' }: 
       }
     }
     return parts
-  }, [value])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- toLibSide는 view에만 의존
+  }, [value, view])
 
   const openDialogFor = (id: string, label: string) => {
     if (readOnly) return
@@ -136,8 +151,10 @@ export function BodyMap({ value, onChange, readOnly = false, gender = 'male' }: 
   ) => {
     if (!part.slug) return
     const slug = part.slug as LibSlug
-    const id = libPartToId(slug, libSide as LibSide | undefined)
-    const label = buildLabel(slug, libSide as LibSide | undefined)
+    // 라이브러리 side(화면 기준) → anatomical side(환자 기준)
+    const anatomicalSide = fromLibSide(libSide)
+    const id = libPartToId(slug, anatomicalSide)
+    const label = buildLabel(slug, anatomicalSide)
     openDialogFor(id, label)
   }
 
