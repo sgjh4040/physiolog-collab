@@ -154,7 +154,7 @@ export async function deleteTreatment(id: string, patientId: string): Promise<{ 
 // 가장 최근 치료 기록 조회 (메인 화면용)
 export async function getLatestTreatment(patientId: string): Promise<Treatment | null> {
   const supabase = await createClient()
-  
+
   const { data, error } = await supabase
     .from('treatments')
     .select('*')
@@ -168,6 +168,48 @@ export async function getLatestTreatment(patientId: string): Promise<Treatment |
   }
 
   return dbToTreatment(data)
+}
+
+/**
+ * 여러 환자의 마지막 치료 날짜를 한 번의 쿼리로 가져옴 (N+1 제거).
+ *
+ * 기존 `for (const p of patients) await getLatestTreatment(p.id)` 패턴은
+ * 환자 N명에 대해 N개의 순차 RSC POST 요청을 발생시켜:
+ *   1. 모바일에서 환자 30명 = 3~9초 동안 connection 점유
+ *   2. 그 동안 사용자가 카드 탭해도 navigation request가 큐잉되어
+ *      "안 눌리는 것처럼" 보이는 UX 버그 발생
+ *
+ * IN 쿼리 + 클라이언트 그룹화로 1회 round-trip으로 압축. 환자 50명 *
+ * 평균 5건이면 ~250행, 모바일에서도 충분히 빠름.
+ *
+ * 반환: { [patientId]: 'YYYY-MM-DD' } — 치료 기록이 없는 환자는 키 자체 없음.
+ */
+export async function getLatestTreatmentDateMap(
+  patientIds: string[]
+): Promise<Record<string, string>> {
+  if (patientIds.length === 0) return {}
+
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('treatments')
+    .select('patient_id, date')
+    .in('patient_id', patientIds)
+    .order('date', { ascending: false })
+
+  if (error || !data) {
+    if (error) console.error('Error fetching latest treatment dates:', error)
+    return {}
+  }
+
+  // 정렬이 date desc라 각 patient_id의 첫 등장이 가장 최근.
+  const result: Record<string, string> = {}
+  for (const row of data) {
+    if (!(row.patient_id in result)) {
+      result[row.patient_id] = row.date
+    }
+  }
+  return result
 }
 
 // DB snake_case -> 앱 camelCase 변환

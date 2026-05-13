@@ -9,7 +9,7 @@ import { PatientCard } from './PatientCard'
 import { treatmentStore, evaluationStore } from '@/lib/storage'
 import { getProfile, logout } from '@/lib/supabase/actions'
 import { getPatients, deletePatient, updatePatient } from '@/lib/supabase/patients'
-import { getLatestTreatment } from '@/lib/supabase/treatments'
+import { getLatestTreatmentDateMap } from '@/lib/supabase/treatments'
 import { LogOut, Trash2, CheckCircle, CheckSquare, Square, X, BarChart2, ArrowUpDown, UserCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -40,23 +40,23 @@ export function PatientList() {
   const confirm = useConfirm()
 
   useEffect(() => {
-    // 서버에서 환자 목록 및 최근 치료 날짜 가져오기
+    // 서버에서 환자 목록 및 최근 치료 날짜 가져오기.
     // hydrated 신호는 환자 목록 도착 시점에 켜야 EmptyState 깜빡임이 안 생김.
     // (이전: setHydrated가 fetch 시작과 동시에 동기 호출되어 patients=[] 상태로
     //  "등록된 환자가 아직 없습니다"가 잠깐 표시되는 race 발생)
+    //
+    // latestDates는 별도 단일 batch 쿼리로 가져옴.
+    // (이전: 환자 N명 → N번 순차 RSC POST → connection 점유로 사용자 navigation
+    //  큐잉되어 "마지막 치료 날짜 안 뜨면 카드 클릭 안 됨" UX 버그)
     const fetchPatients = async () => {
       const data = await getPatients()
       setPatients(data)
       setHydrated(true)
 
-      const datesMap: Record<string, string> = {}
-      for (const p of data) {
-        const latest = await getLatestTreatment(p.id)
-        if (latest) {
-          datesMap[p.id] = latest.date
-        }
+      if (data.length > 0) {
+        const datesMap = await getLatestTreatmentDateMap(data.map((p) => p.id))
+        setLatestDates(datesMap)
       }
-      setLatestDates(datesMap)
     }
     fetchPatients()
 
