@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Plus, Search, Users } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -25,6 +25,9 @@ import { Edit3 } from 'lucide-react'
 import type { Patient } from '@/features/patients/domain/types'
 
 type UserProfile = { name: string; role: string; workplace: string }
+
+/** 첫 화면 + 무한 스크롤 시 한 번에 추가로 렌더링할 환자 수. */
+const PAGE_SIZE = 9
 
 type PatientListProps = {
   /** Server component(page.tsx)에서 prefetch한 환자 목록 — useEffect fetch 대체 */
@@ -53,6 +56,14 @@ export function PatientList({
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [sortBy, setSortBy] = useState<'name' | 'status' | 'recent' | 'created'>('name')
 
+  // 무한 스크롤 — 한 번에 PAGE_SIZE개씩 점진 렌더링.
+  // 모바일에서 환자 수십~수백 명 카드를 동시에 mount하면 첫 paint와
+  // scroll 성능이 저하되므로 viewport 진입 시점에 9개씩 추가.
+  // (server fetch는 모든 환자 받음 — 검색/정렬을 client로 즉시 처리하기 위함.
+  //  환자 수가 200+ 되면 server pagination도 추가 검토.)
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
+
   const router = useRouter()
   const confirm = useConfirm()
 
@@ -63,6 +74,28 @@ export function PatientList({
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSortBy(savedSort as 'name' | 'status' | 'recent' | 'created')
     }
+  }, [])
+
+  // 검색어/탭/정렬 바뀌면 visible 리셋 (다른 결과 셋의 첫 9개부터)
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setVisibleCount(PAGE_SIZE)
+  }, [query, activeTab, sortBy])
+
+  // Intersection Observer — sentinel이 viewport 안으로 들어오면 +PAGE_SIZE
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((c) => c + PAGE_SIZE)
+        }
+      },
+      { rootMargin: '200px' }, // 200px 앞에서 미리 fetch
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
   }, [])
 
   const handleSortChange = (val: 'name' | 'status' | 'recent' | 'created') => {
@@ -298,9 +331,9 @@ export function PatientList({
       ) : (
         <div className="flex flex-col gap-2 relative z-10 flex-1">
           {isSelectionMode && filtered.length > 0 && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={handleSelectAll}
               className="self-start text-xs text-muted-foreground h-7 px-2"
             >
@@ -308,7 +341,7 @@ export function PatientList({
               {selectedIds.length === filtered.length ? '전체 해제' : '전체 선택'}
             </Button>
           )}
-          {filtered.map((p) => (
+          {filtered.slice(0, visibleCount).map((p) => (
             <PatientCard
               key={p.id}
               patient={p}
@@ -318,6 +351,15 @@ export function PatientList({
               onSelect={handleSelect}
             />
           ))}
+          {visibleCount < filtered.length && (
+            <>
+              {/* sentinel — viewport 진입 시 +PAGE_SIZE */}
+              <div ref={sentinelRef} aria-hidden className="h-1" />
+              <p className="py-3 text-center text-xs text-muted-foreground">
+                불러오는 중… ({visibleCount} / {filtered.length})
+              </p>
+            </>
+          )}
         </div>
       )}
 
