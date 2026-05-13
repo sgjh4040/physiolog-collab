@@ -46,16 +46,37 @@ export function BodyMap({ value, onChange, readOnly = false, gender = 'male' }: 
 
   // 라이브러리에 넘길 데이터 — painMapping 중 라이브러리 slug로 변환 가능한 것만.
   // intensity는 라이브러리 colors 배열의 1-based 인덱스이므로 우리 1-10을 그대로 사용.
+  //
+  // 같은 slug에 left + right 둘 다 painMapping에 있으면 라이브러리 Map.set이 한 entry만 유지하고
+  // data.find(slug).side 분기로 한쪽만 색칠하는 한계가 있음. 우회: 양쪽 다 있으면 side 제거(undefined)
+  // 해서 두 path 모두 색칠되게 함. intensity는 더 큰 쪽으로.
   const libData = useMemo(() => {
-    const parts: ExtendedBodyPart[] = []
+    const bySlug = new Map<LibSlug, { left?: number; right?: number; central?: number }>()
     for (const p of value) {
       const lib = idToLibPart(p.id)
       if (!lib) continue
-      parts.push({
-        slug: lib.slug as ExtendedBodyPart['slug'],
-        intensity: p.intensity,
-        side: lib.side,
-      })
+      const cur = bySlug.get(lib.slug) ?? {}
+      if (lib.side === 'left') cur.left = Math.max(cur.left ?? 0, p.intensity)
+      else if (lib.side === 'right') cur.right = Math.max(cur.right ?? 0, p.intensity)
+      else cur.central = Math.max(cur.central ?? 0, p.intensity)
+      bySlug.set(lib.slug, cur)
+    }
+
+    const parts: ExtendedBodyPart[] = []
+    for (const [slug, sides] of bySlug) {
+      if (sides.left != null && sides.right != null) {
+        // 양쪽 다 — side 없이 합쳐서 양쪽 모두 색칠
+        parts.push({
+          slug: slug as ExtendedBodyPart['slug'],
+          intensity: Math.max(sides.left, sides.right),
+        })
+      } else if (sides.left != null) {
+        parts.push({ slug: slug as ExtendedBodyPart['slug'], intensity: sides.left, side: 'left' })
+      } else if (sides.right != null) {
+        parts.push({ slug: slug as ExtendedBodyPart['slug'], intensity: sides.right, side: 'right' })
+      } else if (sides.central != null) {
+        parts.push({ slug: slug as ExtendedBodyPart['slug'], intensity: sides.central })
+      }
     }
     return parts
   }, [value])
