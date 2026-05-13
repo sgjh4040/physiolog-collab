@@ -30,6 +30,7 @@ import {
 } from '@/data/patient-options'
 import { patientFormSchema, type PatientFormValues } from '@/features/patients/domain/schema'
 import { toISODate } from '@/lib/utils/date'
+import { Loader2 } from 'lucide-react'
 
 type Props = {
   defaultValues?: Partial<PatientFormValues>
@@ -372,12 +373,24 @@ export function PatientForm({
               variant="outline"
               className="flex-1"
               onClick={onCancel}
+              disabled={form.formState.isSubmitting}
             >
               취소
             </Button>
           )}
-          <Button type="submit" className="flex-1">
-            {submitLabel}
+          <Button
+            type="submit"
+            className="flex-1"
+            disabled={form.formState.isSubmitting}
+          >
+            {form.formState.isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                저장 중...
+              </>
+            ) : (
+              submitLabel
+            )}
           </Button>
         </div>
       </form>

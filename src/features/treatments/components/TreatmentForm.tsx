@@ -17,6 +17,7 @@ import {
   treatmentFormSchema,
   type TreatmentFormValues,
 } from '@/features/treatments/domain/schema'
+import { Loader2 } from 'lucide-react'
 
 type Props = {
   defaultValues?: Partial<TreatmentFormValues>
@@ -149,12 +150,24 @@ export function TreatmentForm({
                 variant="outline"
                 className="flex-1"
                 onClick={onCancel}
+                disabled={form.formState.isSubmitting}
               >
                 취소
               </Button>
             )}
-            <Button type="submit" className="flex-1">
-              {submitLabel}
+            <Button
+              type="submit"
+              className="flex-1"
+              disabled={form.formState.isSubmitting}
+            >
+              {form.formState.isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  저장 중...
+                </>
+              ) : (
+                submitLabel
+              )}
             </Button>
           </div>
         </div>
