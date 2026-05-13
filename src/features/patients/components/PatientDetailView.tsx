@@ -11,17 +11,31 @@ import { TreatmentList } from '@/features/treatments/components/TreatmentList'
 import { EvaluationList } from '@/features/evaluations/components/EvaluationList'
 import { IcfTab } from '@/features/icf/components/IcfTab'
 import type { Patient } from '@/features/patients/domain/types'
+import type { Treatment } from '@/features/treatments/domain/types'
+import type { Evaluation } from '@/features/evaluations/domain/types'
+import type { IcfAssessment } from '@/features/icf/domain/types'
 
 const VALID_TABS = new Set(['info', 'treatments', 'evaluations', 'icf'])
 
-type Props = { patient: Patient }
+type Props = {
+  patient: Patient
+  initialTreatments: Treatment[]
+  initialEvaluations: Evaluation[]
+  initialIcfAssessments: IcfAssessment[]
+}
 
 /**
  * 환자 상세 페이지의 인터랙션 부분 (탭 전환, URL 동기화).
  * 데이터 fetch는 server component(page.tsx)에서 처리하므로 여기서는 prop으로만 받음.
- * 그 결과 layout(헤더+탭)이 stream으로 즉시 보임 → 클릭 후 풀스크린 LoadingScreen 사라짐.
+ * 자식 탭 데이터(treatments/evaluations/icf)도 server에서 prefetch되어 prop으로 전달됨 →
+ * 탭 전환 시 추가 client fetch 없이 즉시 콘텐츠 노출.
  */
-export function PatientDetailView({ patient }: Props) {
+export function PatientDetailView({
+  patient,
+  initialTreatments,
+  initialEvaluations,
+  initialIcfAssessments,
+}: Props) {
   const searchParams = useSearchParams()
 
   const tabFromUrl = searchParams.get('tab')
@@ -82,15 +96,24 @@ export function PatientDetailView({ patient }: Props) {
         </TabsContent>
 
         <TabsContent value="treatments">
-          <TreatmentList patientId={patient.id} />
+          <TreatmentList
+            patientId={patient.id}
+            initialTreatments={initialTreatments}
+          />
         </TabsContent>
 
         <TabsContent value="evaluations">
-          <EvaluationList patientId={patient.id} />
+          <EvaluationList
+            patientId={patient.id}
+            initialEvaluations={initialEvaluations}
+          />
         </TabsContent>
 
         <TabsContent value="icf">
-          <IcfTab patientId={patient.id} />
+          <IcfTab
+            patientId={patient.id}
+            initialAssessments={initialIcfAssessments}
+          />
         </TabsContent>
       </Tabs>
     </div>

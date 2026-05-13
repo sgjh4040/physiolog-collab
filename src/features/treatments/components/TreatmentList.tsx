@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Copy, FileText, Plus } from 'lucide-react'
@@ -27,32 +27,28 @@ import { formatDateShort } from '@/lib/utils/date'
 import { BODY_REGION_LABEL } from '@/data/body-parts'
 import type { Treatment } from '@/features/treatments/domain/types'
 
-type Props = { patientId: string }
+type Props = {
+  patientId: string
+  initialTreatments: Treatment[]
+}
 
-export function TreatmentList({ patientId }: Props) {
-  const [treatments, setTreatments] = useState<Treatment[]>([])
-  const [hydrated, setHydrated] = useState(false)
+export function TreatmentList({ patientId, initialTreatments }: Props) {
+  // 초기 데이터는 server prefetch → 첫 렌더에 즉시 표시 (깜빡임/로딩 텍스트 없음)
+  const [treatments, setTreatments] = useState<Treatment[]>(initialTreatments)
   const [selected, setSelected] = useState<Treatment | null>(null)
   const [openCopyPopover, setOpenCopyPopover] = useState(false)
-  
+
   const [isSelectionMode, setIsSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   const router = useRouter()
   const confirm = useConfirm()
 
+  // 삭제 등 mutation 후 최신 데이터 동기화용. 첫 로드는 server에서 처리됨.
   const loadTreatments = async () => {
     const data = await getTreatments(patientId)
     setTreatments(data)
   }
-
-  useEffect(() => {
-    async function load() {
-      await loadTreatments()
-      setHydrated(true)
-    }
-    load()
-  }, [patientId])
 
   const hasAny = treatments.length > 0
 
@@ -109,7 +105,7 @@ export function TreatmentList({ patientId }: Props) {
       <div className="flex items-center justify-between">
         <div className="flex flex-col gap-0.5">
           <p className="text-sm text-muted-foreground">
-            {hydrated ? `총 ${treatments.length}건` : '불러오는 중…'}
+            총 {treatments.length}건
           </p>
           {isSelectionMode && (
             <p className="text-[10px] font-medium text-primary">
@@ -188,7 +184,7 @@ export function TreatmentList({ patientId }: Props) {
         </div>
       </div>
 
-      {hydrated && !hasAny && (
+      {!hasAny && (
         <div className="flex flex-col items-center justify-center gap-3 rounded-md border border-dashed py-12">
           <FileText
             className="h-10 w-10 text-muted-foreground/40"

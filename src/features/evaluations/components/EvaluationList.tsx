@@ -18,30 +18,33 @@ import type {
   GraphMetric,
 } from '@/features/evaluations/domain/types'
 
-type Props = { patientId: string }
+type Props = {
+  patientId: string
+  initialEvaluations: Evaluation[]
+}
 
-export function EvaluationList({ patientId }: Props) {
-  const [evaluations, setEvaluations] = useState<Evaluation[]>([])
+export function EvaluationList({ patientId, initialEvaluations }: Props) {
+  // 초기 데이터는 server prefetch → 첫 렌더에 즉시 표시
+  const [evaluations, setEvaluations] = useState<Evaluation[]>(initialEvaluations)
   const [graphMetrics, setGraphMetrics] = useState<GraphMetric[]>([])
-  const [hydrated, setHydrated] = useState(false)
+  // graphMetrics는 localStorage(client-only) 읽기라 hydration 분리 필요
+  const [graphHydrated, setGraphHydrated] = useState(false)
   const [selected, setSelected] = useState<Evaluation | null>(null)
-  
+
   const [isSelectionMode, setIsSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const confirm = useConfirm()
 
+  // 삭제 등 mutation 후 최신 데이터 동기화용. 첫 로드는 server에서 처리됨.
   const loadEvaluations = async () => {
     const data = await getEvaluations(patientId)
     setEvaluations(data)
   }
 
   useEffect(() => {
-    async function load() {
-      await loadEvaluations()
-      setGraphMetrics(evaluationStore.getGraphSettings(patientId).metrics)
-      setHydrated(true)
-    }
-    load()
+    // localStorage 기반 그래프 설정만 client에서 hydrate (SSR mismatch 회피)
+    setGraphMetrics(evaluationStore.getGraphSettings(patientId).metrics)
+    setGraphHydrated(true)
   }, [patientId])
 
   const updateGraph = (metrics: GraphMetric[]) => {
@@ -112,7 +115,7 @@ export function EvaluationList({ patientId }: Props) {
           />
         </div>
 
-        {!hydrated ? (
+        {!graphHydrated ? (
           <LoadingScreen className="min-h-32 flex-none py-6" />
         ) : graphMetrics.length === 0 ? (
           <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground leading-relaxed">
@@ -170,7 +173,7 @@ export function EvaluationList({ patientId }: Props) {
           </div>
         </div>
 
-        {hydrated && !hasAny && (
+        {!hasAny && (
           <div className="flex flex-col items-center justify-center gap-3 rounded-md border border-dashed py-12">
             <ClipboardList
               className="h-10 w-10 text-muted-foreground/40"

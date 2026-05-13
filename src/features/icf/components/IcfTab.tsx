@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { Brain, CheckSquare, Plus, Square, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -10,30 +10,25 @@ import { getIcfAssessments, deleteIcfAssessment } from '@/lib/supabase/icf'
 import { useConfirm } from '@/components/confirm-dialog'
 import { DOMAIN_KEYS, DOMAIN_META, type IcfAssessment } from '@/features/icf/domain/types'
 import { cn } from '@/lib/utils'
-import { LoadingScreen } from '@/components/loading-screen'
 
-type Props = { patientId: string }
+type Props = {
+  patientId: string
+  initialAssessments: IcfAssessment[]
+}
 
-export function IcfTab({ patientId }: Props) {
-  const [assessments, setAssessments] = useState<IcfAssessment[]>([])
-  const [hydrated, setHydrated] = useState(false)
+export function IcfTab({ patientId, initialAssessments }: Props) {
+  // 초기 데이터는 server prefetch → 첫 렌더에 즉시 표시
+  const [assessments, setAssessments] = useState<IcfAssessment[]>(initialAssessments)
   const [expanded, setExpanded] = useState<string | null>(null)
-  
+
   const [isSelectionMode, setIsSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const confirm = useConfirm()
 
+  // 삭제 등 mutation 후 최신 데이터 동기화용. 첫 로드는 server에서 처리됨.
   const loadAssessments = async () => {
     setAssessments(await getIcfAssessments(patientId))
   }
-
-  useEffect(() => {
-    async function load() {
-      await loadAssessments()
-      setHydrated(true)
-    }
-    load()
-  }, [patientId])
 
   const handleDelete = async (id: string) => {
     const ok = await confirm({
@@ -82,10 +77,6 @@ export function IcfTab({ patientId }: Props) {
   const toggleSelectionMode = () => {
     setIsSelectionMode(!isSelectionMode)
     setSelectedIds(new Set())
-  }
-
-  if (!hydrated) {
-    return <LoadingScreen className="min-h-32 flex-none py-6" />
   }
 
   const hasAny = assessments.length > 0
