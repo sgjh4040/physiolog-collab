@@ -7,8 +7,8 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { PatientCard } from './PatientCard'
 import { treatmentStore, evaluationStore } from '@/lib/storage'
-import { getProfile, logout } from '@/lib/supabase/actions'
-import { getPatients, deletePatient, updatePatient } from '@/lib/supabase/patients'
+import { logout } from '@/lib/supabase/actions'
+import { deletePatient, updatePatient, getPatients } from '@/lib/supabase/patients'
 import { LogOut, Trash2, CheckCircle, CheckSquare, Square, X, BarChart2, ArrowUpDown, UserCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -24,21 +24,30 @@ import {
 import { Edit3 } from 'lucide-react'
 import type { Patient } from '@/features/patients/domain/types'
 
+type UserProfile = { name: string; role: string; workplace: string }
+
 type PatientListProps = {
   /** Server component(page.tsx)에서 prefetch한 환자 목록 — useEffect fetch 대체 */
   initialPatients: Patient[]
   /** Server에서 같은 round-trip으로 prefetch한 마지막 치료일 map */
   initialLatestDates: Record<string, string>
+  /** Server에서 prefetch한 사용자 프로필 (헤더 좌상단 표시용, layout shift 방지) */
+  initialUserProfile: UserProfile | null
 }
 
-export function PatientList({ initialPatients, initialLatestDates }: PatientListProps) {
-  // 데이터 fetch는 server component에서 끝냈음. props로 받은 값으로 즉시 시작.
+export function PatientList({
+  initialPatients,
+  initialLatestDates,
+  initialUserProfile,
+}: PatientListProps) {
+  // 데이터/프로필 fetch는 server component에서 끝냈음. props로 받은 값으로 즉시 시작.
   // (이전: client useEffect에서 fetch → 응답 도착 전까지 navigation 등 다른 RSC
-  //  요청이 같은 pipeline에서 큐잉되어 카드 클릭이 무반응으로 보이는 UX 버그)
+  //  요청이 같은 pipeline에서 큐잉되어 카드 클릭이 무반응으로 보이는 UX 버그
+  //  + userProfile null → 도착 시 layout shift 발생)
   const [patients, setPatients] = useState<Patient[]>(initialPatients)
   const [latestDates] = useState<Record<string, string>>(initialLatestDates)
+  const [userProfile] = useState<UserProfile | null>(initialUserProfile)
   const [query, setQuery] = useState('')
-  const [userProfile, setUserProfile] = useState<{ name: string; role: string; workplace: string } | null>(null)
   const [activeTab, setActiveTab] = useState('active')
   const [isSelectionMode, setIsSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -48,20 +57,7 @@ export function PatientList({ initialPatients, initialLatestDates }: PatientList
   const confirm = useConfirm()
 
   useEffect(() => {
-    // 서버에서 프로필 정보 가져오기 (데이터 fetch는 server component가 처리)
-    const loadUser = async () => {
-      const profile = await getProfile()
-      if (profile) {
-        setUserProfile({
-          name: profile.name || profile.email?.split('@')[0] || '사용자',
-          role: profile.role || '',
-          workplace: profile.workplace || ''
-        })
-      }
-    }
-    loadUser()
-
-    // 저장된 정렬 기준 불러오기 — localStorage 동기화
+    // 저장된 정렬 기준 불러오기 — localStorage 동기화 (client only)
     const savedSort = localStorage.getItem('physiolog_patient_sort')
     if (savedSort && ['name', 'status', 'recent', 'created'].includes(savedSort)) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
