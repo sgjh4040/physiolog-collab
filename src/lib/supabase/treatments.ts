@@ -35,6 +35,7 @@ export async function getTreatments(patientId: string): Promise<Treatment[]> {
     .select('*')
     .eq('patient_id', patientId)
     .order('date', { ascending: false })
+    .order('created_at', { ascending: false })
 
   if (error) {
     console.error('Error fetching treatments:', error)
@@ -160,6 +161,7 @@ export async function getLatestTreatment(patientId: string): Promise<Treatment |
     .select('*')
     .eq('patient_id', patientId)
     .order('date', { ascending: false })
+    .order('created_at', { ascending: false })
     .limit(1)
     .single()
 
@@ -196,6 +198,7 @@ export async function getLatestTreatmentDateMap(
     .select('patient_id, date')
     .in('patient_id', patientIds)
     .order('date', { ascending: false })
+    .order('created_at', { ascending: false })
 
   if (error || !data) {
     if (error) console.error('Error fetching latest treatment dates:', error)
