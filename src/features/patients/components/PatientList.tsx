@@ -82,20 +82,30 @@ export function PatientList({
     setVisibleCount(PAGE_SIZE)
   }, [query, activeTab, sortBy])
 
-  // Intersection Observer — sentinel이 viewport 안으로 들어오면 +PAGE_SIZE
+  // 무한 스크롤 — scroll event listener로 sentinel이 viewport 근처면 +PAGE_SIZE.
+  // (IntersectionObserver를 처음 시도했지만 한계가 있었음: 등록 직후 자동 fire는
+  //  무시할 수 있어도 사용자가 한 번에 바닥까지 스크롤하면 sentinel이 줄곧
+  //  viewport 안에 머무르며 '상태 변화'가 없어 추가 fire가 안 발생함.)
+  // sentinel 자체는 visibleCount < filtered.length일 때만 렌더되므로
+  // 다 보이면 sentinelRef.current=null → skip.
   useEffect(() => {
-    const sentinel = sentinelRef.current
-    if (!sentinel) return
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
+    let ticking = false
+    const onScroll = () => {
+      if (ticking) return
+      const sentinel = sentinelRef.current
+      if (!sentinel) return // 다 보임 = skip
+      ticking = true
+      requestAnimationFrame(() => {
+        const rect = sentinel.getBoundingClientRect()
+        // sentinel 윗변이 viewport 바닥 + 100px 안으로 들어오면 trigger
+        if (rect.top < window.innerHeight + 100) {
           setVisibleCount((c) => c + PAGE_SIZE)
         }
-      },
-      { rootMargin: '200px' }, // 200px 앞에서 미리 fetch
-    )
-    observer.observe(sentinel)
-    return () => observer.disconnect()
+        ticking = false
+      })
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
   const handleSortChange = (val: 'name' | 'status' | 'recent' | 'created') => {
