@@ -5,21 +5,141 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react'
+import type { PainPattern } from '@/features/evaluations/domain/types'
+import {
+  libPartToId,
+  buildLabel,
+  type LibSlug,
+  type LibSide,
+} from '@/features/evaluations/lib/bodymap-mapping'
 
-const DISEASES = [
-  { name: '뇌졸중 (Stroke)', region: 'cervical', methods: ['manual', 'task'], exercises: ['Balance Training', 'Gait Practice'] },
-  { name: '허리 디스크 (HLD)', region: 'lumbar', methods: ['manual', 'exercise'], exercises: ['Pelvic Tilt', 'Bird Dog'] },
-  { name: '오십견 (Frozen Shoulder)', region: 'shoulder', methods: ['manual', 'thermal'], exercises: ['Codman Exercise', 'Wall Walk'] },
-  { name: '파킨슨병 (Parkinson)', region: 'cervical', methods: ['task', 'exercise'], exercises: ['Big Movements', 'Step Training'] },
-  { name: '퇴행성 관절염 (Knee OA)', region: 'knee', methods: ['manual', 'electric'], exercises: ['Quadriceps Setting', 'SLR Exercise'] },
-  { name: '회전근개 파열 (Rotator Cuff Tear)', region: 'shoulder', methods: ['manual', 'exercise'], exercises: ['Internal Rotation', 'External Rotation'] },
-  { name: '척추관 협착증 (Spinal Stenosis)', region: 'lumbar', methods: ['manual', 'thermal'], exercises: ['Knee to Chest', 'Cat-Camel'] },
-  { name: '테니스 엘보 (Lateral Epicondylitis)', region: 'elbow', methods: ['manual', 'ultrasound'], exercises: ['Wrist Extension', 'Eccentric Loading'] },
-  { name: '발목 불안정성 (Ankle Instability)', region: 'ankle', methods: ['manual', 'exercise'], exercises: ['Balance Board', 'Heel Raise'] },
-  { name: '경추통 (Cervicalgia)', region: 'cervical', methods: ['manual', 'thermal'], exercises: ['Chin Tuck', 'Neck Isometric'] },
+// ============================================================
+// Fixture: 10명 — 진단명·연령·통증 부위 임상적으로 자연스러운 매핑
+// ============================================================
+
+type SeedPainArea = {
+  slug: LibSlug
+  side?: LibSide
+  pattern: PainPattern
+  intensity: number  // 1~10, 첫 평가(2026-01) 기준. 이후 평가에서 감소
+}
+
+type PatientFixture = {
+  name: string
+  age: number               // 2026년 기준
+  gender: 'male' | 'female'
+  diagnosis: string
+  region: string            // BodyRegionId — 치료 부위
+  methods: string[]         // TreatmentMethod[]
+  exercises: string[]
+  insurance: 'health' | 'industrial' | 'auto' | 'private' | 'medical' | 'self'
+  status: 'new' | 'readmit' | 'hold' | 'discharged'
+  painAreas: SeedPainArea[]
+}
+
+const PATIENT_FIXTURES: PatientFixture[] = [
+  {
+    name: '김철수', age: 67, gender: 'male',
+    diagnosis: '뇌졸중 (Stroke)', region: 'cervical',
+    methods: ['manual', 'task'], exercises: ['Balance Training', 'Gait Practice'],
+    insurance: 'health', status: 'readmit',
+    painAreas: [
+      { slug: 'deltoids', side: 'right', pattern: 'weakness', intensity: 6 },
+      { slug: 'quadriceps', side: 'right', pattern: 'weakness', intensity: 5 },
+    ],
+  },
+  {
+    name: '이영희', age: 52, gender: 'female',
+    diagnosis: '허리 디스크 (HLD)', region: 'lumbar',
+    methods: ['manual', 'exercise'], exercises: ['Pelvic Tilt', 'Bird Dog'],
+    insurance: 'health', status: 'new',
+    painAreas: [
+      { slug: 'lower-back', pattern: 'radiating', intensity: 8 },
+      { slug: 'hamstring', side: 'left', pattern: 'tingling', intensity: 4 },
+    ],
+  },
+  {
+    name: '박지민', age: 58, gender: 'female',
+    diagnosis: '오십견 (Frozen Shoulder)', region: 'shoulder',
+    methods: ['manual', 'thermal'], exercises: ['Codman Exercise', 'Wall Walk'],
+    insurance: 'health', status: 'new',
+    painAreas: [
+      { slug: 'deltoids', side: 'left', pattern: 'sharp', intensity: 7 },
+    ],
+  },
+  {
+    name: '최성훈', age: 72, gender: 'male',
+    diagnosis: '파킨슨병 (Parkinson)', region: 'cervical',
+    methods: ['task', 'exercise'], exercises: ['Big Movements', 'Step Training'],
+    insurance: 'medical', status: 'hold',
+    painAreas: [
+      { slug: 'neck', pattern: 'weakness', intensity: 4 },
+    ],
+  },
+  {
+    name: '정다은', age: 65, gender: 'female',
+    diagnosis: '퇴행성 관절염 (Knee OA)', region: 'knee',
+    methods: ['manual', 'electric'], exercises: ['Quadriceps Setting', 'SLR Exercise'],
+    insurance: 'health', status: 'readmit',
+    painAreas: [
+      { slug: 'knees', side: 'right', pattern: 'sharp', intensity: 7 },
+      { slug: 'knees', side: 'left', pattern: 'sharp', intensity: 4 },
+    ],
+  },
+  {
+    name: '강민호', age: 42, gender: 'male',
+    diagnosis: '회전근개 파열 (Rotator Cuff Tear)', region: 'shoulder',
+    methods: ['manual', 'exercise'], exercises: ['Internal Rotation', 'External Rotation'],
+    insurance: 'industrial', status: 'new',
+    painAreas: [
+      { slug: 'deltoids', side: 'right', pattern: 'sharp', intensity: 6 },
+      { slug: 'trapezius', side: 'right', pattern: 'referred', intensity: 3 },
+    ],
+  },
+  {
+    name: '윤서연', age: 71, gender: 'female',
+    diagnosis: '척추관 협착증 (Spinal Stenosis)', region: 'lumbar',
+    methods: ['manual', 'thermal'], exercises: ['Knee to Chest', 'Cat-Camel'],
+    insurance: 'health', status: 'hold',
+    painAreas: [
+      { slug: 'lower-back', pattern: 'radiating', intensity: 7 },
+      { slug: 'calves', side: 'right', pattern: 'tingling', intensity: 5 },
+      { slug: 'calves', side: 'left', pattern: 'tingling', intensity: 4 },
+    ],
+  },
+  {
+    name: '한지우', age: 38, gender: 'male',
+    diagnosis: '테니스 엘보 (Lateral Epicondylitis)', region: 'elbow',
+    methods: ['manual', 'ultrasound'], exercises: ['Wrist Extension', 'Eccentric Loading'],
+    insurance: 'private', status: 'new',
+    painAreas: [
+      { slug: 'forearm', side: 'right', pattern: 'sharp', intensity: 6 },
+    ],
+  },
+  {
+    name: '오세현', age: 28, gender: 'male',
+    diagnosis: '발목 불안정성 (Ankle Instability)', region: 'ankle',
+    methods: ['manual', 'exercise'], exercises: ['Balance Board', 'Heel Raise'],
+    insurance: 'auto', status: 'new',
+    painAreas: [
+      { slug: 'ankles', side: 'left', pattern: 'sharp', intensity: 5 },
+    ],
+  },
+  {
+    name: '임채원', age: 33, gender: 'female',
+    diagnosis: '경추통 (Cervicalgia)', region: 'cervical',
+    methods: ['manual', 'thermal'], exercises: ['Chin Tuck', 'Neck Isometric'],
+    insurance: 'health', status: 'new',
+    painAreas: [
+      { slug: 'neck', pattern: 'sharp', intensity: 6 },
+      { slug: 'trapezius', side: 'right', pattern: 'referred', intensity: 4 },
+    ],
+  },
 ]
 
-const NAMES = ['김철수', '이영희', '박지민', '최성훈', '정다은', '강민호', '윤서연', '한지우', '오세현', '임채원', '조현우', '송미경', '남궁현', '서예진', '유재석', '강호동', '신동엽', '이광수', '전소민', '양세찬', '김종국', '하동훈', '지석진', '박명수', '정준하', '노홍철', '정형돈', '길성준', '장윤주', '데프콘']
+// ============================================================
+// Seed client
+// ============================================================
 
 export default function SeedClient() {
   const [loading, setLoading] = useState(false)
@@ -37,45 +157,64 @@ export default function SeedClient() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('로그인이 필요합니다.')
 
-      for (let i = 0; i < 30; i++) {
-        setStatus(`환자 ${i + 1}/30 생성 중...`)
-        const disease = DISEASES[i % DISEASES.length]
-        const name = NAMES[i % NAMES.length]
-        
+      const total = PATIENT_FIXTURES.length
+
+      for (let i = 0; i < total; i++) {
+        const fx = PATIENT_FIXTURES[i]
+        setStatus(`환자 ${i + 1}/${total} 생성 중... (${fx.name})`)
+
+        // 생년월일은 age 기반 계산 (2026 기준, 임의 월/일)
+        const birthYear = 2026 - fx.age
+        const birthDate = `${birthYear}-01-01`
+
         // 1. Create Patient
-        const { data: patient, error: pError } = await supabase.from('patients').insert({
-          user_id: user.id,
-          name: `${name}_${i + 1}`,
-          birth_date: `19${Math.floor(Math.random() * 50) + 40}-01-01`,
-          gender: Math.random() > 0.5 ? 'male' : 'female',
-          diagnosis: disease.name,
-          treatment_start_date: '2026-01-01',
-          status: 'treating'
-        }).select().single()
+        const { data: patient, error: pError } = await supabase
+          .from('patients')
+          .insert({
+            user_id: user.id,
+            name: `${fx.name}_${i + 1}`,
+            birth_date: birthDate,
+            gender: fx.gender,
+            diagnosis: fx.diagnosis,
+            treatment_start_date: '2026-01-01',
+            insurance: fx.insurance,
+            status: fx.status,
+          })
+          .select()
+          .single()
 
         if (pError) throw pError
 
-        // 2. Create Evaluations (Monthly from 2026-01-01)
+        // 2. Create Evaluations — 월간 5건, painMapping 시간 흐름에 따라 intensity 감소
         const evalDates = ['2026-01-01', '2026-02-01', '2026-03-01', '2026-04-01', '2026-05-01']
-        const evals = evalDates.map((date, idx) => ({
-          user_id: user.id,
-          patient_id: patient.id,
-          date,
-          vas: Math.max(0, 8 - idx * 1.5), // Decreasing pain
-          rom: [],
-          mmt: [],
-          body_measurement: [],
-          pain_mapping: [],
-          custom: []
-        }))
+        const evals = evalDates.map((date, idx) => {
+          const decay = idx * 1.5  // 5개월간 강도 점진 감소 (치료 효과 시각화)
+          const painMapping = fx.painAreas.map((pa) => ({
+            id: libPartToId(pa.slug, pa.side),
+            label: buildLabel(pa.slug, pa.side),
+            pattern: pa.pattern,
+            intensity: Math.max(1, Math.round(pa.intensity - decay)),
+          }))
+          // VAS = painMapping intensity의 최대값
+          const vas = painMapping.reduce((max, p) => Math.max(max, p.intensity), 0)
+          return {
+            user_id: user.id,
+            patient_id: patient.id,
+            date,
+            vas,
+            rom: [],
+            mmt: [],
+            body_measurement: [],
+            pain_mapping: painMapping,
+            custom: [],
+          }
+        })
         await supabase.from('evaluations').insert(evals)
 
-        // 3. Create Treatments (2-3 times a week from 2026-01-01 to 2026-05-11)
-        const treatments = []
+        // 3. Create Treatments — 주 2~3회, 2026-01-01~05-11
+        const treatments: Array<Record<string, unknown>> = []
         const currentDate = new Date('2026-01-01')
         const endDate = new Date('2026-05-11')
-        
-        // Randomize session days for each patient (e.g., [1,3,5] or [2,4] etc.)
         const sessionDays = Math.random() > 0.5 ? [1, 3, 5] : [2, 4]
 
         while (currentDate <= endDate) {
@@ -84,27 +223,27 @@ export default function SeedClient() {
               user_id: user.id,
               patient_id: patient.id,
               date: currentDate.toISOString().split('T')[0],
-              body_parts: [{ region: disease.region, side: Math.random() > 0.5 ? 'right' : 'left', muscles: [] }],
-              methods: disease.methods,
+              body_parts: [{ region: fx.region, side: Math.random() > 0.5 ? 'right' : 'left', muscles: [] }],
+              methods: fx.methods,
               exercise_concept: 'recovery',
-              exercises: disease.exercises.map(ex => ({
+              exercises: fx.exercises.map((ex) => ({
                 id: Math.random().toString(36).substr(2, 9),
                 name: ex,
                 sets: Math.floor(Math.random() * 3) + 2,
-                reps: Math.floor(Math.random() * 5) + 10
+                reps: Math.floor(Math.random() * 5) + 10,
               })),
-              comment: `${disease.name} 치료 ${treatments.length + 1}회차 진행. ${['통증 완화 중', '가동범위 개선 중', '근력 향상 관찰됨', '보행 패턴 안정화'][Math.floor(Math.random() * 4)]}.`
+              comment: `${fx.diagnosis} 치료 ${treatments.length + 1}회차 진행. ${['통증 완화 중', '가동범위 개선 중', '근력 향상 관찰됨', '보행 패턴 안정화'][Math.floor(Math.random() * 4)]}.`,
             })
           }
           currentDate.setDate(currentDate.getDate() + 1)
         }
-        
-        // Chunk insert treatments to avoid payload limits
+
+        // Chunk insert to avoid payload limits
         for (let j = 0; j < treatments.length; j += 20) {
           await supabase.from('treatments').insert(treatments.slice(j, j + 20))
         }
 
-        setProgress(Math.round(((i + 1) / 30) * 100))
+        setProgress(Math.round(((i + 1) / total) * 100))
       }
 
       setStatus('모든 데이터 생성 완료!')
@@ -127,9 +266,9 @@ export default function SeedClient() {
           <div className="bg-blue-50 p-4 rounded-lg text-sm text-blue-800">
             <p>이 도구는 다음 데이터를 생성합니다:</p>
             <ul className="list-disc list-inside mt-2 space-y-1">
-              <li>30명의 환자 명단</li>
-              <li>환자별 월간 평가 기록 (26년 1월~5월)</li>
-              <li>환자별 주 2회 치료 기록 (26년 1월~5월)</li>
+              <li>10명의 환자 명단 (진단명·연령·통증 부위 다양)</li>
+              <li>환자별 월간 평가 기록 (26년 1월~5월, painMapping 포함)</li>
+              <li>환자별 주 2~3회 치료 기록 (26년 1월~5월)</li>
             </ul>
           </div>
 
@@ -153,16 +292,16 @@ export default function SeedClient() {
               <span>{progress}%</span>
             </div>
             <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-              <div 
-                className="bg-blue-600 h-full transition-all duration-300" 
+              <div
+                className="bg-blue-600 h-full transition-all duration-300"
                 style={{ width: `${progress}%` }}
               />
             </div>
           </div>
 
-          <Button 
-            onClick={generateData} 
-            disabled={loading} 
+          <Button
+            onClick={generateData}
+            disabled={loading}
             className="w-full h-12 text-lg font-semibold bg-blue-600 hover:bg-blue-700"
           >
             {loading ? (
@@ -171,7 +310,7 @@ export default function SeedClient() {
                 데이터 생성 중...
               </>
             ) : (
-              '환자 30명 데이터 추가하기'
+              '환자 10명 데이터 추가하기'
             )}
           </Button>
 
