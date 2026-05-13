@@ -9,7 +9,6 @@ import { PatientCard } from './PatientCard'
 import { treatmentStore, evaluationStore } from '@/lib/storage'
 import { getProfile, logout } from '@/lib/supabase/actions'
 import { getPatients, deletePatient, updatePatient } from '@/lib/supabase/patients'
-import { getLatestTreatmentDateMap } from '@/lib/supabase/treatments'
 import { LogOut, Trash2, CheckCircle, CheckSquare, Square, X, BarChart2, ArrowUpDown, UserCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -25,42 +24,31 @@ import {
 import { Edit3 } from 'lucide-react'
 import type { Patient } from '@/features/patients/domain/types'
 
-export function PatientList() {
-  const [patients, setPatients] = useState<Patient[]>([])
+type PatientListProps = {
+  /** Server component(page.tsx)에서 prefetch한 환자 목록 — useEffect fetch 대체 */
+  initialPatients: Patient[]
+  /** Server에서 같은 round-trip으로 prefetch한 마지막 치료일 map */
+  initialLatestDates: Record<string, string>
+}
+
+export function PatientList({ initialPatients, initialLatestDates }: PatientListProps) {
+  // 데이터 fetch는 server component에서 끝냈음. props로 받은 값으로 즉시 시작.
+  // (이전: client useEffect에서 fetch → 응답 도착 전까지 navigation 등 다른 RSC
+  //  요청이 같은 pipeline에서 큐잉되어 카드 클릭이 무반응으로 보이는 UX 버그)
+  const [patients, setPatients] = useState<Patient[]>(initialPatients)
+  const [latestDates] = useState<Record<string, string>>(initialLatestDates)
   const [query, setQuery] = useState('')
-  const [hydrated, setHydrated] = useState(false)
   const [userProfile, setUserProfile] = useState<{ name: string; role: string; workplace: string } | null>(null)
   const [activeTab, setActiveTab] = useState('active')
   const [isSelectionMode, setIsSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [sortBy, setSortBy] = useState<'name' | 'status' | 'recent' | 'created'>('name')
-  const [latestDates, setLatestDates] = useState<Record<string, string>>({})
 
   const router = useRouter()
   const confirm = useConfirm()
 
   useEffect(() => {
-    // 서버에서 환자 목록 및 최근 치료 날짜 가져오기.
-    // hydrated 신호는 환자 목록 도착 시점에 켜야 EmptyState 깜빡임이 안 생김.
-    // (이전: setHydrated가 fetch 시작과 동시에 동기 호출되어 patients=[] 상태로
-    //  "등록된 환자가 아직 없습니다"가 잠깐 표시되는 race 발생)
-    //
-    // latestDates는 별도 단일 batch 쿼리로 가져옴.
-    // (이전: 환자 N명 → N번 순차 RSC POST → connection 점유로 사용자 navigation
-    //  큐잉되어 "마지막 치료 날짜 안 뜨면 카드 클릭 안 됨" UX 버그)
-    const fetchPatients = async () => {
-      const data = await getPatients()
-      setPatients(data)
-      setHydrated(true)
-
-      if (data.length > 0) {
-        const datesMap = await getLatestTreatmentDateMap(data.map((p) => p.id))
-        setLatestDates(datesMap)
-      }
-    }
-    fetchPatients()
-
-    // 서버에서 프로필 정보 가져오기
+    // 서버에서 프로필 정보 가져오기 (데이터 fetch는 server component가 처리)
     const loadUser = async () => {
       const profile = await getProfile()
       if (profile) {
@@ -307,11 +295,7 @@ export function PatientList() {
         </Tabs>
       </div>
 
-      {!hydrated ? (
-        <div className="flex flex-1 items-center justify-center py-20 relative z-10">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        </div>
-      ) : filtered.length === 0 ? (
+      {filtered.length === 0 ? (
         <div className="relative z-10 flex-1">
           <EmptyState hasPatients={patients.length > 0} />
         </div>
