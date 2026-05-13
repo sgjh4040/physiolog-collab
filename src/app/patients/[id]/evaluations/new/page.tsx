@@ -89,6 +89,7 @@ export default function NewEvaluationPage({ params }: PageProps) {
       </header>
 
       <EvaluationForm
+        patientGender={patient.gender}
         submitLabel="저장"
         onSubmit={handleSubmit}
         onCancel={() => router.replace(`/patients/${patientId}?tab=evaluations`)}

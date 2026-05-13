@@ -44,6 +44,7 @@ type Props = {
   submitLabel?: string
   onSubmit: (values: EvaluationFormValues) => void | Promise<void>
   onCancel?: () => void
+  patientGender?: 'male' | 'female'
 }
 
 export function EvaluationForm({
@@ -51,6 +52,7 @@ export function EvaluationForm({
   submitLabel = '저장',
   onSubmit,
   onCancel,
+  patientGender,
 }: Props) {
   const form = useForm<EvaluationFormValues>({
     resolver: zodResolver(evaluationFormSchema),
@@ -131,6 +133,7 @@ export function EvaluationForm({
           <BodyMap
             value={form.watch('painMapping')}
             onChange={(v) => form.setValue('painMapping', v, { shouldDirty: true })}
+            gender={patientGender}
           />
         </ToggleSection>
 

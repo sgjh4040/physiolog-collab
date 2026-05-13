@@ -96,6 +96,7 @@ export default function EditEvaluationPage({ params }: PageProps) {
       </header>
 
       <EvaluationForm
+        patientGender={patient.gender}
         defaultValues={defaultValues}
         submitLabel="수정 완료"
         onSubmit={handleSubmit}
