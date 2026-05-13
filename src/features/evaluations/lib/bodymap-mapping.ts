@@ -158,7 +158,8 @@ const OLD_ID_MAP: Record<string, LibPart> = {
   foot_r_back: { slug: 'feet', side: 'right' },
 }
 
-/** intensity 1~10 → 색상 10단계 그라데이션 (yellow → orange → red) */
+/** intensity 1~10 → 색상 10단계 그라데이션 (yellow → orange → red).
+ * 양상 색상 적용으로 인해 SVG 색칠엔 더 이상 사용 안 함 — fallback / 그래프 등 용도 유지. */
 export const INTENSITY_COLORS_10 = [
   '#fef3c7', // 1 light yellow
   '#fde68a', // 2
@@ -171,3 +172,16 @@ export const INTENSITY_COLORS_10 = [
   '#b91c1c', // 9
   '#7f1d1d', // 10 deep red
 ]
+
+import type { PainPattern } from '../domain/types'
+
+/** 통증 양상 → 인체 도식 색상 + 태그 텍스트 색상 hex (Tailwind 매핑 그대로). */
+export const PATTERN_COLOR_HEX: Record<PainPattern, string> = {
+  referred: '#ef4444',     // red-500 (연관통)
+  tingling: '#3b82f6',     // blue-500 (저림)
+  weakness: '#4f46e5',     // indigo-600 (힘빠짐)
+  paresthesia: '#a855f7',  // purple-500 (이상감각)
+  radiating: '#f97316',    // orange-500 (방사통)
+  sharp: '#eab308',        // yellow-500 (날카로운 통증)
+  custom: '#14b8a6',       // teal-500 (기타)
+}

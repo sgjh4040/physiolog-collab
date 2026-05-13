@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label'
 import type { PainPattern, PainArea } from '../domain/types'
 import {
   GENERAL_ID,
-  INTENSITY_COLORS_10,
+  PATTERN_COLOR_HEX,
   buildLabel,
   idToLibPart,
   labelFromId,
@@ -45,37 +45,70 @@ export function BodyMap({ value, onChange, readOnly = false, gender = 'male' }: 
   )
 
   // 라이브러리에 넘길 데이터 — painMapping 중 라이브러리 slug로 변환 가능한 것만.
-  // intensity는 라이브러리 colors 배열의 1-based 인덱스이므로 우리 1-10을 그대로 사용.
+  // SVG 색칠은 양상별 색상(PATTERN_COLOR_HEX)으로 — color 필드가 라이브러리 우선순위에서
+  // intensity보다 위에 있어 색상 명시 시 그라데이션 무시됨.
   //
-  // 같은 slug에 left + right 둘 다 painMapping에 있으면 라이브러리 Map.set이 한 entry만 유지하고
-  // data.find(slug).side 분기로 한쪽만 색칠하는 한계가 있음. 우회: 양쪽 다 있으면 side 제거(undefined)
-  // 해서 두 path 모두 색칠되게 함. intensity는 더 큰 쪽으로.
+  // 같은 slug에 left + right 둘 다 있으면:
+  //   1. 라이브러리 Map.set이 한 entry만 유지 + data.find(slug).side 분기로 한쪽만 색칠하는
+  //      한계가 있어 side 제거(undefined)해서 두 path 모두 색칠
+  //   2. 좌/우 양상이 다를 경우 max intensity 쪽 양상으로 통일 (사용자 결정)
   const libData = useMemo(() => {
-    const bySlug = new Map<LibSlug, { left?: number; right?: number; central?: number }>()
+    // slug별 최대 intensity와 그때의 양상을 추적
+    const bySlug = new Map<
+      LibSlug,
+      { left?: { intensity: number; pattern: PainPattern }; right?: { intensity: number; pattern: PainPattern }; central?: { intensity: number; pattern: PainPattern } }
+    >()
     for (const p of value) {
       const lib = idToLibPart(p.id)
       if (!lib) continue
       const cur = bySlug.get(lib.slug) ?? {}
-      if (lib.side === 'left') cur.left = Math.max(cur.left ?? 0, p.intensity)
-      else if (lib.side === 'right') cur.right = Math.max(cur.right ?? 0, p.intensity)
-      else cur.central = Math.max(cur.central ?? 0, p.intensity)
+      const key = lib.side ?? 'central'
+      const existing = cur[key]
+      if (!existing || p.intensity > existing.intensity) {
+        cur[key] = { intensity: p.intensity, pattern: p.pattern }
+      }
       bySlug.set(lib.slug, cur)
     }
 
     const parts: ExtendedBodyPart[] = []
     for (const [slug, sides] of bySlug) {
-      if (sides.left != null && sides.right != null) {
-        // 양쪽 다 — side 없이 합쳐서 양쪽 모두 색칠
+      // 좌/우 합칠 때 max intensity 쪽 양상으로 통일
+      const pickWinner = (
+        a?: { intensity: number; pattern: PainPattern },
+        b?: { intensity: number; pattern: PainPattern }
+      ) => {
+        if (!a) return b
+        if (!b) return a
+        return a.intensity >= b.intensity ? a : b
+      }
+
+      if (sides.left && sides.right) {
+        const winner = pickWinner(sides.left, sides.right)!
         parts.push({
           slug: slug as ExtendedBodyPart['slug'],
-          intensity: Math.max(sides.left, sides.right),
+          intensity: winner.intensity,
+          color: PATTERN_COLOR_HEX[winner.pattern],
         })
-      } else if (sides.left != null) {
-        parts.push({ slug: slug as ExtendedBodyPart['slug'], intensity: sides.left, side: 'left' })
-      } else if (sides.right != null) {
-        parts.push({ slug: slug as ExtendedBodyPart['slug'], intensity: sides.right, side: 'right' })
-      } else if (sides.central != null) {
-        parts.push({ slug: slug as ExtendedBodyPart['slug'], intensity: sides.central })
+      } else if (sides.left) {
+        parts.push({
+          slug: slug as ExtendedBodyPart['slug'],
+          intensity: sides.left.intensity,
+          side: 'left',
+          color: PATTERN_COLOR_HEX[sides.left.pattern],
+        })
+      } else if (sides.right) {
+        parts.push({
+          slug: slug as ExtendedBodyPart['slug'],
+          intensity: sides.right.intensity,
+          side: 'right',
+          color: PATTERN_COLOR_HEX[sides.right.pattern],
+        })
+      } else if (sides.central) {
+        parts.push({
+          slug: slug as ExtendedBodyPart['slug'],
+          intensity: sides.central.intensity,
+          color: PATTERN_COLOR_HEX[sides.central.pattern],
+        })
       }
     }
     return parts
@@ -182,7 +215,6 @@ export function BodyMap({ value, onChange, readOnly = false, gender = 'male' }: 
           side={view}
           gender={gender}
           scale={1.2}
-          colors={INTENSITY_COLORS_10}
           onBodyPartPress={handleLibClick}
         />
       </div>
@@ -251,11 +283,16 @@ export function BodyMap({ value, onChange, readOnly = false, gender = 'male' }: 
                     key={p}
                     type="button"
                     variant={pattern === p ? 'default' : 'outline'}
-                    className={`h-auto py-2.5 flex flex-col gap-1 ${
+                    className={`h-auto py-2.5 flex flex-row items-center justify-center gap-2 ${
                       pattern === p ? '' : 'hover:bg-muted'
                     }`}
                     onClick={() => setPattern(p)}
                   >
+                    <span
+                      className="h-3 w-3 shrink-0 rounded-full border border-white/40"
+                      style={{ backgroundColor: PATTERN_COLOR_HEX[p] }}
+                      aria-hidden="true"
+                    />
                     <span className="text-xs sm:text-sm">{patternLabel(p)}</span>
                   </Button>
                 ))}
