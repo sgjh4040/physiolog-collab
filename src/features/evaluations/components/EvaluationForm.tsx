@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
-import { VASInput } from './VASInput'
 import { ROMInput } from './ROMInput'
 import { MMTInput } from './MMTInput'
 import { MeasurementInput } from './MeasurementInput'
@@ -20,7 +19,6 @@ import {
 } from '@/features/evaluations/domain/schema'
 
 type ToggleName =
-  | 'toggleVas'
   | 'toggleRom'
   | 'toggleMmt'
   | 'toggleMeasurement'
@@ -29,8 +27,6 @@ type ToggleName =
 
 const EMPTY_DEFAULTS: EvaluationFormValues = {
   date: toISODate(),
-  toggleVas: false,
-  vas: undefined,
   toggleRom: false,
   rom: [],
   toggleMmt: false,
@@ -64,10 +60,20 @@ export function EvaluationForm({
 
   const errors = form.formState.errors
 
+  // 통증 부위가 1개 이상이면 가장 아픈 강도(max)를 vas로 자동 산출.
+  // 빈 배열이면 0 (통증 없음). 결과는 onSubmit 콜백으로 그대로 흘러가 caller가 DB에 저장.
+  const submitWithVas = (values: EvaluationFormValues) => {
+    const computedVas =
+      values.painMapping.length > 0
+        ? Math.max(...values.painMapping.map((p) => p.intensity))
+        : 0
+    return onSubmit({ ...values, vas: computedVas })
+  }
+
   return (
     <FormProvider {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={form.handleSubmit(submitWithVas)}
         className="flex flex-col gap-5 pb-24"
       >
         <section className="flex flex-col gap-2">
@@ -118,25 +124,19 @@ export function EvaluationForm({
 
         <ToggleSection
           title="통증"
-          subtitle="통증 부위 및 양상 (VAS 필수)"
+          subtitle="통증 부위 및 양상 — VAS는 자동 산출"
           name="togglePainMapping"
           required
         >
-          <div className="flex flex-col gap-4">
-            <div className="rounded-lg border bg-muted/30 p-4">
-              <Label className="mb-2 block text-xs font-bold text-muted-foreground uppercase tracking-wider">VAS (통증 점수) *</Label>
-              <VASInput />
-            </div>
-            <BodyMap 
-              value={form.watch('painMapping')} 
-              onChange={(v) => form.setValue('painMapping', v, { shouldDirty: true })} 
-            />
-          </div>
+          <BodyMap
+            value={form.watch('painMapping')}
+            onChange={(v) => form.setValue('painMapping', v, { shouldDirty: true })}
+          />
         </ToggleSection>
 
-        {errors.toggleVas?.message && (
+        {errors.togglePainMapping?.message && (
           <p className="text-sm text-destructive">
-            {String(errors.toggleVas.message)}
+            {String(errors.togglePainMapping.message)}
           </p>
         )}
 

@@ -32,7 +32,8 @@ export default function EditEvaluationPage({ params }: PageProps) {
   async function handleSubmit(values: EvaluationFormValues) {
     const result = await updateEvaluation(evaluationId, patientId, {
       date: values.date,
-      vas: values.toggleVas || values.togglePainMapping ? values.vas : undefined,
+      // vas는 EvaluationForm의 submitWithVas wrapper가 painMapping.intensity의 max로 자동 산출해서 채워줌
+      vas: values.vas,
       rom: values.toggleRom ? values.rom : undefined,
       mmt: values.toggleMmt
         ? values.mmt.map((m) => ({ ...m, grade: m.grade as MMTGrade }))
@@ -64,7 +65,7 @@ export default function EditEvaluationPage({ params }: PageProps) {
 
   const defaultValues: Partial<EvaluationFormValues> = {
     date: evaluation.date,
-    toggleVas: evaluation.vas != null,
+    // 기존 vas는 form state에 들어가지만 사용자가 painMapping을 수정하고 저장하면 자동 산출로 덮어씀
     vas: evaluation.vas ?? undefined,
     toggleRom: evaluation.rom != null && evaluation.rom.length > 0,
     rom: (evaluation.rom ?? []) as EvaluationFormValues['rom'],

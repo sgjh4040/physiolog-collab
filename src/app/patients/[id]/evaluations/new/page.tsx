@@ -32,7 +32,8 @@ export default function NewEvaluationPage({ params }: PageProps) {
     const input: EvaluationInput = {
       patientId,
       date: values.date,
-      vas: values.toggleVas || values.togglePainMapping ? values.vas : undefined,
+      // vas는 EvaluationForm의 submitWithVas wrapper가 painMapping.intensity의 max로 자동 산출해서 채워줌
+      vas: values.vas,
       rom: values.toggleRom ? values.rom : undefined,
       mmt: values.toggleMmt
         ? values.mmt.map((m) => ({ ...m, grade: m.grade as MMTGrade }))

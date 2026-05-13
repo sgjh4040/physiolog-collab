@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { X } from 'lucide-react'
 import './BodyMap.css'
 import type { PainPattern, PainArea } from '../domain/types'
@@ -67,12 +67,26 @@ type Props = {
   readOnly?: boolean
 }
 
+// '전신' 빠른 선택 — SVG 좌표 없이 별도 버튼으로 추가. BODY_PARTS와 동일 shape.
+const GENERAL_PART = {
+  id: 'general',
+  label: '전신',
+  side: 'front' as const,
+  d: '',
+}
+
 export function BodyMap({ value, onChange, readOnly = false }: Props) {
   const [selectedPart, setSelectedPart] = useState<typeof BODY_PARTS[0] | null>(null)
   const [view, setView] = useState<'front' | 'back'>('front')
   const [intensity, setIntensity] = useState(5)
   const [pattern, setPattern] = useState<PainPattern>('referred')
   const [customLabel, setCustomLabel] = useState('')
+
+  // 저장 시점에 form에서 동일 식으로 계산되어 DB에 들어가는 VAS 자동 산출 미리보기.
+  const computedVas = useMemo(
+    () => (value.length > 0 ? Math.max(...value.map((p) => p.intensity)) : 0),
+    [value]
+  )
 
   const handlePartClick = (part: typeof BODY_PARTS[0]) => {
     if (readOnly) return
@@ -121,19 +135,39 @@ export function BodyMap({ value, onChange, readOnly = false }: Props) {
 
   return (
     <div className="flex flex-col items-center gap-4 py-4">
+      {/* 자동 계산된 VAS + '전신 통증' 빠른 선택 */}
+      <div className="flex w-full flex-col items-center gap-2 rounded-lg border bg-muted/30 px-4 py-3">
+        <div className="flex items-baseline gap-2">
+          <span className="text-xs text-muted-foreground">자동 계산된 통증 점수</span>
+          <span className="text-2xl font-semibold text-primary">{computedVas}</span>
+          <span className="text-sm text-muted-foreground">/ 10</span>
+        </div>
+        {!readOnly && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => handlePartClick(GENERAL_PART)}
+            className="text-xs"
+          >
+            전신 통증으로 입력
+          </Button>
+        )}
+      </div>
+
       <div className="flex gap-2 mb-2">
-        <Button 
-          type="button" 
-          variant={view === 'front' ? 'default' : 'outline'} 
-          size="sm" 
+        <Button
+          type="button"
+          variant={view === 'front' ? 'default' : 'outline'}
+          size="sm"
           onClick={() => setView('front')}
         >
           앞면
         </Button>
-        <Button 
-          type="button" 
-          variant={view === 'back' ? 'default' : 'outline'} 
-          size="sm" 
+        <Button
+          type="button"
+          variant={view === 'back' ? 'default' : 'outline'}
+          size="sm"
           onClick={() => setView('back')}
         >
           뒷면
@@ -192,6 +226,22 @@ export function BodyMap({ value, onChange, readOnly = false }: Props) {
             </DialogTitle>
           </DialogHeader>
           <div className="grid gap-6 py-4">
+            <div className="grid gap-3">
+              <Label className="text-sm font-medium">통증 강도 (1~10)</Label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  min={1}
+                  max={10}
+                  step={1}
+                  value={intensity}
+                  onChange={(e) => setIntensity(Number(e.target.value))}
+                  className="flex-1 accent-primary"
+                />
+                <span className="w-10 text-center text-sm font-semibold text-primary">{intensity}</span>
+              </div>
+            </div>
+
             <div className="grid gap-3">
               <Label className="text-sm font-medium">통증 양상</Label>
               <div className="grid grid-cols-2 gap-2">

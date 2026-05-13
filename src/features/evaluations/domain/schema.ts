@@ -39,7 +39,8 @@ export const painAreaSchema = z.object({
 export const evaluationFormSchema = z
   .object({
     date: z.string().min(1, '날짜를 선택하세요'),
-    toggleVas: z.boolean(),
+    // vas는 사용자 직접 입력이 아니라 submit 시점에 painMapping[].intensity의 max로 자동 산출됨.
+    // optional 유지: form 내부에서는 비어있고, EvaluationForm의 submitWithVas wrapper가 채워서 onSubmit에 전달.
     vas: z.number().int().min(0).max(10).optional(),
     toggleRom: z.boolean(),
     rom: z.array(romRecordSchema),
@@ -54,7 +55,6 @@ export const evaluationFormSchema = z
   })
   .refine(
     (d) =>
-      d.toggleVas ||
       d.toggleRom ||
       d.toggleMmt ||
       d.toggleMeasurement ||
@@ -62,13 +62,9 @@ export const evaluationFormSchema = z
       d.toggleCustom,
     {
       message: '측정한 항목을 1개 이상 켜세요',
-      path: ['toggleVas'],
+      path: ['togglePainMapping'],
     },
   )
-  .refine((d) => !(d.toggleVas || d.togglePainMapping) || (d.vas !== undefined && d.vas !== null), {
-    message: 'VAS 점수를 입력하세요',
-    path: ['vas'],
-  })
   .refine((d) => !d.toggleRom || d.rom.length > 0, {
     message: 'ROM 항목을 1개 이상 추가하세요',
     path: ['rom'],
