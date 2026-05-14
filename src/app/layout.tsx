@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthGuard } from "@/components/AuthGuard";
 import { ConfirmDialogProvider } from "@/components/confirm-dialog";
-import { InitialSplash } from "@/components/InitialSplash";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -32,8 +31,12 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        {/* PWA cold start splash — React state 기반으로 mount 후 fade out (DOM 직접 조작 X). */}
-        <InitialSplash />
+        {/*
+          PWA cold start splash는 AuthGuard가 담당.
+          AuthGuard는 client component지만 SSR 트리 렌더 시 isVerified=false 초기 상태로
+          splash 마크업이 첫 HTML에 이미 포함됨 → cold start 흰 frame 직후 그대로 노출.
+          별도 InitialSplash 두면 중복 + 폰트 차이로 두 splash 연달아 보이는 깜빡임.
+        */}
         <AuthGuard>
           <ConfirmDialogProvider>
             {children}
