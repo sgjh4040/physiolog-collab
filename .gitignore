@@ -52,3 +52,8 @@ test-results/
 # PWA — serwist 빌드 산출물
 public/sw.js
 public/swe-worker-*.js
+
+# Claude Code 동적 lock/state 파일 (schedule 등)
+.claude/*.lock
+.claude/cache/
+.claude/state/
