@@ -39,13 +39,23 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
           transition={{ duration: 1, ease: "easeOut" }}
           className="flex flex-col items-center gap-8 text-center max-w-sm"
         >
+          {/* Atlas 워드마크 — iOS splash 이미지와 동일 톤. 브랜드 연속성. */}
+          <div className="flex flex-col items-center gap-1.5">
+            <h1 className="text-5xl font-light tracking-tight text-foreground">
+              Atlas
+            </h1>
+            <p className="text-[10px] font-medium tracking-[0.3em] uppercase text-muted-foreground/50">
+              Physiotherapy charting
+            </p>
+          </div>
+
           <div className="relative flex items-center justify-center">
             <div className="absolute h-16 w-16 animate-ping rounded-full bg-primary/10" />
             <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent shadow-xl" />
           </div>
 
           <div className="flex flex-col gap-4">
-            <p className="text-xl font-medium tracking-tight text-foreground/80 break-keep leading-relaxed italic">
+            <p className="text-lg font-medium tracking-tight text-foreground/70 break-keep leading-relaxed italic">
               {'"정확한 평가는 치료의 가장 '}<span className="text-primary font-bold decoration-primary/40 underline underline-offset-8">정직한 지도(Map)</span>{'가 됩니다."'}
             </p>
             <div className="mx-auto h-[1px] w-16 bg-gradient-to-r from-transparent via-muted-foreground/30 to-transparent" />
