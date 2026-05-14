@@ -40,6 +40,7 @@ export const exerciseSchema = z.object({
   sets: z.coerce.number().min(0).optional(),
   reps: z.coerce.number().min(0).optional(),
   weight: z.coerce.number().min(0).optional(),
+  duration: z.coerce.number().min(0).optional(),  // 분 단위
 })
 
 export const bodyPartSchema = z.object({

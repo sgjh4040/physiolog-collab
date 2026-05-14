@@ -41,6 +41,7 @@ export type Exercise = {
   sets?: number       // 델타 기록용 수치
   reps?: number
   weight?: number
+  duration?: number   // 분 단위 (소수 OK). 에르고미터·유산소 등 시간 기반 운동
 }
 
 export type Treatment = {

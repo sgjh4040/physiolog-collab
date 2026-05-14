@@ -116,10 +116,11 @@ export function TreatmentDetailSheet({ treatment, onOpenChange, onDelete }: Prop
                       <div key={e.id ?? idx} className="rounded-xl border bg-card p-4 shadow-sm">
                         <div className="flex items-center justify-between border-b pb-2 mb-2">
                           <span className="font-bold text-sm text-primary">{idx + 1}. {e.name}</span>
-                          <div className="flex gap-3 text-xs font-black text-slate-900">
-                            {e.sets && <span>{e.sets} SET</span>}
-                            {e.reps && <span>{e.reps} REP</span>}
-                            {e.weight && <span>{e.weight} kg</span>}
+                          <div className="flex flex-wrap gap-3 text-xs font-black text-slate-900">
+                            {e.sets ? <span>{e.sets} SET</span> : null}
+                            {e.reps ? <span>{e.reps} REP</span> : null}
+                            {e.weight ? <span>{e.weight} kg</span> : null}
+                            {e.duration ? <span>{e.duration} 분</span> : null}
                           </div>
                         </div>
                         {e.intensity && (

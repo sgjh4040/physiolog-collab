@@ -146,21 +146,28 @@ export function ExerciseSection() {
                   </Button>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2">
-                  <CounterField 
-                    label="세트" 
-                    value={watch(`exercises.${idx}.sets`) ?? 0} 
-                    onChange={(v) => setValue(`exercises.${idx}.sets`, v)} 
+                {/* 4 카운터: 세트 / 횟수 / 무게 / 시간. 모바일은 2x2, 데스크톱은 한 줄.
+                    duration은 에르고미터·유산소 등 시간 기반 운동에 사용 (안 채워도 OK). */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <CounterField
+                    label="세트"
+                    value={watch(`exercises.${idx}.sets`) ?? 0}
+                    onChange={(v) => setValue(`exercises.${idx}.sets`, v)}
                   />
-                  <CounterField 
-                    label="횟수" 
-                    value={watch(`exercises.${idx}.reps`) ?? 0} 
-                    onChange={(v) => setValue(`exercises.${idx}.reps`, v)} 
+                  <CounterField
+                    label="횟수"
+                    value={watch(`exercises.${idx}.reps`) ?? 0}
+                    onChange={(v) => setValue(`exercises.${idx}.reps`, v)}
                   />
-                  <CounterField 
-                    label="무게(kg)" 
-                    value={watch(`exercises.${idx}.weight`) ?? 0} 
-                    onChange={(v) => setValue(`exercises.${idx}.weight`, v)} 
+                  <CounterField
+                    label="무게(kg)"
+                    value={watch(`exercises.${idx}.weight`) ?? 0}
+                    onChange={(v) => setValue(`exercises.${idx}.weight`, v)}
+                  />
+                  <CounterField
+                    label="시간(분)"
+                    value={watch(`exercises.${idx}.duration`) ?? 0}
+                    onChange={(v) => setValue(`exercises.${idx}.duration`, v)}
                   />
                 </div>
 
