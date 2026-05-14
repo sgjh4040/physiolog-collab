@@ -73,6 +73,8 @@ export default function NewTreatmentPage({ params }: PageProps) {
       date: values.date,
       bodyParts: values.bodyParts,
       methods: values.methods,
+      otherTreatmentMethod: values.otherTreatmentMethod,
+      methodDetails: values.methodDetails,
       exerciseConcept: values.exerciseConcept,
       exercises: values.exercises,
       homework: values.homework,

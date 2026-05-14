@@ -225,6 +225,7 @@ export default function SeedClient() {
               date: currentDate.toISOString().split('T')[0],
               body_parts: [{ region: fx.region, side: Math.random() > 0.5 ? 'right' : 'left', muscles: [] }],
               methods: fx.methods,
+              method_details: {},  // 시드는 빈 객체. 사용자 직접 입력 케이스는 새 치료 작성에서 검증
               exercise_concept: 'recovery',
               exercises: fx.exercises.map((ex) => ({
                 id: Math.random().toString(36).substr(2, 9),

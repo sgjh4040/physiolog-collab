@@ -56,6 +56,10 @@ export const treatmentFormSchema = z
       .array(treatmentMethodEnum)
       .min(1, '치료 방법을 1개 이상 선택하세요'),
     otherTreatmentMethod: z.string().trim().optional(),
+    // 메서드별 optional 상세 메모. 7개 메서드 키 (exercise는 UI에서 안 보이지만 호환 위해 enum에는 포함)
+    methodDetails: z
+      .record(treatmentMethodEnum, z.string().trim().optional())
+      .optional(),
     exerciseConcept: exerciseConceptEnum.optional(),
     exercises: z.array(exerciseSchema),
     homework: z.string().trim(),

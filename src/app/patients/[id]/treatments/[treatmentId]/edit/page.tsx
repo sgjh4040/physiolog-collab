@@ -35,6 +35,7 @@ export default function EditTreatmentPage({ params }: PageProps) {
       bodyParts: values.bodyParts,
       methods: values.methods,
       otherTreatmentMethod: values.otherTreatmentMethod,
+      methodDetails: values.methodDetails,
       exerciseConcept: values.exerciseConcept,
       exercises: values.exercises,
       homework: values.homework,

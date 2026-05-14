@@ -18,6 +18,7 @@ type TreatmentRow = {
   body_parts: BodyPart[] | null
   methods: TreatmentMethod[] | null
   other_treatment_method: string | null
+  method_details: Partial<Record<TreatmentMethod, string>> | null
   exercise_concept: ExerciseConcept | null
   exercises: Exercise[] | null
   homework: string | null
@@ -78,6 +79,7 @@ export async function createTreatment(input: TreatmentInput): Promise<{ success:
       body_parts: input.bodyParts,
       methods: input.methods,
       other_treatment_method: input.otherTreatmentMethod,
+      method_details: input.methodDetails ?? {},
       exercise_concept: input.exerciseConcept,
       exercises: input.exercises,
       homework: input.homework,
@@ -108,6 +110,7 @@ export async function updateTreatment(id: string, patientId: string, updates: Pa
   if ('bodyParts' in updates) dbUpdates.body_parts = updates.bodyParts ?? null
   if ('methods' in updates) dbUpdates.methods = updates.methods ?? null
   if ('otherTreatmentMethod' in updates) dbUpdates.other_treatment_method = updates.otherTreatmentMethod ?? null
+  if ('methodDetails' in updates) dbUpdates.method_details = updates.methodDetails ?? {}
   if ('exerciseConcept' in updates) dbUpdates.exercise_concept = updates.exerciseConcept ?? null
   if ('exercises' in updates) dbUpdates.exercises = updates.exercises ?? null
   if ('homework' in updates) dbUpdates.homework = updates.homework ?? null
@@ -232,6 +235,7 @@ function dbToTreatment(dbRecord: TreatmentRow): Treatment {
     bodyParts: dbRecord.body_parts ?? [],
     methods: dbRecord.methods ?? [],
     otherTreatmentMethod: dbRecord.other_treatment_method ?? undefined,
+    methodDetails: dbRecord.method_details ?? undefined,
     exerciseConcept: dbRecord.exercise_concept ?? undefined,
     exercises: dbRecord.exercises ?? [],
     homework: dbRecord.homework ?? undefined,

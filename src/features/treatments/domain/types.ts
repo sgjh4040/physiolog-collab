@@ -49,7 +49,13 @@ export type Treatment = {
   date: string                 // ISO yyyy-mm-dd
   bodyParts: BodyPart[]        // 다중
   methods: TreatmentMethod[]   // 다중
-  otherTreatmentMethod?: string // 기타 치료방법 (텍스트)
+  otherTreatmentMethod?: string // 기타 치료방법 (legacy — methodDetails.other 로 점진 이전 예정)
+  /**
+   * 메서드별 optional 상세 메모.
+   * 'exercise'는 운동 카드로 자세 입력하므로 UI에서 textarea 안 노출 (키 자체는 허용).
+   * 예: { manual: "우측 어깨 강도 중", ultrasound: "5분 1MHz" }
+   */
+  methodDetails?: Partial<Record<TreatmentMethod, string>>
   exerciseConcept?: ExerciseConcept
   exercises?: Exercise[]
   homework?: string            // 숙제 (과제·운동 등)

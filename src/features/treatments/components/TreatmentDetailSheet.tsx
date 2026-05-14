@@ -68,15 +68,26 @@ export function TreatmentDetailSheet({ treatment, onOpenChange, onDelete }: Prop
                 </Section>
 
                 <Section title="치료 방법">
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {treatment.methods?.map((m) => (
-                      <Badge key={m} variant="secondary" className="px-2 py-1">
-                        {TREATMENT_METHOD_LABEL[m]}
-                      </Badge>
-                    ))}
-                    {treatment.otherTreatmentMethod && (
-                      <Badge variant="outline">{treatment.otherTreatmentMethod}</Badge>
-                    )}
+                  <div className="flex flex-col gap-2 mt-1">
+                    {treatment.methods?.map((m) => {
+                      // 'other'는 옛 컬럼 otherTreatmentMethod 와 새 컬럼 methodDetails.other 둘 다 호환
+                      const detail =
+                        m === 'other'
+                          ? (treatment.methodDetails?.other ?? treatment.otherTreatmentMethod)
+                          : treatment.methodDetails?.[m]
+                      return (
+                        <div key={m} className="flex flex-col gap-0.5">
+                          <Badge variant="secondary" className="self-start px-2 py-1">
+                            {TREATMENT_METHOD_LABEL[m]}
+                          </Badge>
+                          {detail && (
+                            <p className="ml-2 text-xs text-muted-foreground italic">
+                              &ldquo;{detail}&rdquo;
+                            </p>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
                 </Section>
               </div>
