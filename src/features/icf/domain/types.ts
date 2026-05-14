@@ -8,6 +8,12 @@ export interface IcfDomains {
 
 export interface IcfAnalysisResult {
   domains: IcfDomains
+  /**
+   * 의학적 적색 신호(red flag) — PT 범위를 넘어 의사 평가가 우선되어야 하는 단서.
+   * 야간통 + 체중감소 + 발열(악성 의심), 안장마비/요실금(cauda equina), 진행성 신경학 결손,
+   * 외상 후 변형(골절 의심), 운동 시 흉통·호흡곤란(심혈관) 등. 없으면 빈 배열.
+   */
+  redFlags?: string[]
   coverage: {
     hasGaps: boolean
     missingOrWeak: string[]
@@ -50,6 +56,20 @@ export function mergeDomains(turns: IcfTurn[]): IcfDomains {
       for (const item of turn.result.domains[key]) {
         if (!merged[key].includes(item)) merged[key].push(item)
       }
+    }
+  }
+  return merged
+}
+
+/**
+ * 모든 turn의 redFlags를 합쳐서 중복 제거. 한 번이라도 감지된 적색 신호는 보존.
+ */
+export function mergeRedFlags(turns: IcfTurn[]): string[] {
+  const merged: string[] = []
+  for (const turn of turns) {
+    const flags = turn.result.redFlags ?? []
+    for (const flag of flags) {
+      if (!merged.includes(flag)) merged.push(flag)
     }
   }
   return merged

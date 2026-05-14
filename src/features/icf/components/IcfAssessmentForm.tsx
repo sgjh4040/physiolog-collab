@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Loader2, Sparkles, MessageSquare, Save, RefreshCw, Info } from 'lucide-react'
+import { Loader2, Sparkles, MessageSquare, Save, RefreshCw, Info, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -12,7 +12,7 @@ import { IcfDomainCard } from './IcfDomainCard'
 import { createIcfAssessment } from '@/lib/supabase/icf'
 import { getPatient } from '@/lib/supabase/patients'
 import { getEvaluations } from '@/lib/supabase/evaluations'
-import { mergeDomains, DOMAIN_KEYS, type IcfTurn, type IcfAnalysisResult } from '@/features/icf/domain/types'
+import { mergeDomains, mergeRedFlags, DOMAIN_KEYS, type IcfTurn, type IcfAnalysisResult } from '@/features/icf/domain/types'
 import type { Patient } from '@/features/patients/domain/types'
 import type { Evaluation } from '@/features/evaluations/domain/types'
 
@@ -73,6 +73,7 @@ export function IcfAssessmentForm({ patientId }: Props) {
   }, [patientId])
 
   const latestDomains = turns.length > 0 ? mergeDomains(turns) : null
+  const allRedFlags = turns.length > 0 ? mergeRedFlags(turns) : []
 
   async function analyze(userInput: string) {
     if (!userInput.trim()) return
@@ -262,6 +263,34 @@ export function IcfAssessmentForm({ patientId }: Props) {
             animate={{ opacity: 1 }}
             className="flex flex-col gap-4"
           >
+            {/* Red flag 경고 — 의사 평가 우선 권유 */}
+            {allRedFlags.length > 0 && (
+              <motion.section
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                role="alert"
+                aria-live="polite"
+                className="flex flex-col gap-2 rounded-lg border-2 border-red-300 bg-red-50 p-3 shadow-sm"
+              >
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+                  <div className="flex flex-col gap-1">
+                    <p className="text-sm font-bold text-red-700">
+                      ⚠️ 적색 신호 감지 — 의사 평가 우선 권유
+                    </p>
+                    <p className="text-xs text-red-700/90">
+                      아래 단서는 물리치료 범위를 넘어 의학적 평가가 우선될 수 있는 신호입니다. 환자에게 즉시 의사 진료를 권유하세요.
+                    </p>
+                  </div>
+                </div>
+                <ul className="ml-7 list-disc space-y-1 text-sm text-red-800">
+                  {allRedFlags.map((flag, idx) => (
+                    <li key={idx} className="leading-relaxed">{flag}</li>
+                  ))}
+                </ul>
+              </motion.section>
+            )}
+
             {/* 도메인 카드 그리드 */}
             <section className="flex flex-col gap-2">
               <h3 className="text-sm font-semibold">분류 결과</h3>
