@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Loader2, CheckCircle, AlertCircle } from 'lucide-react'
+import { Loader2, CheckCircle, AlertCircle, Sparkles, Trash2 } from 'lucide-react'
 import type { PainPattern } from '@/features/evaluations/domain/types'
 import {
   libPartToId,
@@ -12,6 +13,7 @@ import {
   type LibSlug,
   type LibSide,
 } from '@/features/evaluations/lib/bodymap-mapping'
+import { cleanAllPatientData, createShowcasePatients } from '@/lib/supabase/seed-actions'
 
 // ============================================================
 // Fixture: 10명 — 진단명·연령·통증 부위 임상적으로 자연스러운 매핑
@@ -142,10 +144,44 @@ const PATIENT_FIXTURES: PatientFixture[] = [
 // ============================================================
 
 export default function SeedClient() {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
   const [progress, setProgress] = useState(0)
+
+  // 시연용 쇼케이스 상태 — 기존 demo state와 분리해서 진행률 충돌 방지
+  const [showcaseLoading, setShowcaseLoading] = useState<'idle' | 'cleaning' | 'creating'>('idle')
+  const [showcaseMsg, setShowcaseMsg] = useState<string>('')
+  const [showcaseErr, setShowcaseErr] = useState<string | null>(null)
+
+  async function handleClean() {
+    if (!confirm('현재 사용자의 모든 환자·치료·평가·ICF 기록을 삭제합니다.\n복구할 수 없습니다. 계속하시겠습니까?')) return
+    setShowcaseLoading('cleaning')
+    setShowcaseErr(null)
+    setShowcaseMsg('')
+    const result = await cleanAllPatientData()
+    if (result.success) {
+      setShowcaseMsg(`청소 완료 — 환자 ${result.count ?? 0}명 삭제됨`)
+    } else {
+      setShowcaseErr(result.error ?? '청소 실패')
+    }
+    setShowcaseLoading('idle')
+  }
+
+  async function handleShowcase() {
+    setShowcaseLoading('creating')
+    setShowcaseErr(null)
+    setShowcaseMsg('')
+    const result = await createShowcasePatients()
+    if (result.success) {
+      setShowcaseMsg(`쇼케이스 환자 ${result.count ?? 0}명 생성 완료 — 1초 후 환자 리스트로 이동합니다`)
+      setTimeout(() => router.push('/'), 1000)
+    } else {
+      setShowcaseErr(result.error ?? '생성 실패')
+    }
+    setShowcaseLoading('idle')
+  }
 
   const generateData = async () => {
     setLoading(true)
@@ -258,7 +294,7 @@ export default function SeedClient() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-slate-50 p-4">
+    <div className="flex flex-col items-center justify-center min-h-screen gap-6 bg-slate-50 p-4 py-10">
       <Card className="w-full max-w-md shadow-xl border-t-4 border-t-blue-600">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center">임의 데이터 생성기</CardTitle>
@@ -317,6 +353,83 @@ export default function SeedClient() {
 
           <p className="text-center text-xs text-slate-400">
             데이터 생성 후 메인 페이지로 돌아가 확인하세요.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* 시연용 쇼케이스 환자 (PDF·ICF 모든 섹션 풀로 채워짐) */}
+      <Card className="w-full max-w-md shadow-xl border-t-4 border-t-emerald-600">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-center gap-2 text-xl font-bold">
+            <Sparkles className="h-5 w-5 text-emerald-600" />
+            시연용 쇼케이스 환자
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-lg bg-emerald-50 p-3 text-xs leading-relaxed text-emerald-900">
+            <p className="font-semibold">대회 시연·친구 인계용 baseline</p>
+            <ul className="mt-1 list-disc list-inside space-y-0.5 text-emerald-800/90">
+              <li>① 회전근개 부분 파열 후 9주차 재활 (미용사, 40대 여성)</li>
+              <li>② 좌측 편마비 후 4개월차 재활 (가정주부, 60대 여성)</li>
+            </ul>
+            <p className="mt-2 text-emerald-700/80">
+              각 환자마다 치료 10건 · 평가 5건 · ICF 분석 1건 — PDF·그래프 모든 섹션이 풍부하게 채워집니다.
+            </p>
+          </div>
+
+          {showcaseErr && (
+            <div className="flex items-center gap-2 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              <AlertCircle className="h-4 w-4" />
+              <span>{showcaseErr}</span>
+            </div>
+          )}
+
+          {showcaseMsg && !showcaseErr && (
+            <div className="flex items-center gap-2 rounded border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
+              <CheckCircle className="h-4 w-4" />
+              <span>{showcaseMsg}</span>
+            </div>
+          )}
+
+          <Button
+            variant="outline"
+            onClick={handleClean}
+            disabled={showcaseLoading !== 'idle'}
+            className="w-full gap-2 border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
+          >
+            {showcaseLoading === 'cleaning' ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                청소 중...
+              </>
+            ) : (
+              <>
+                <Trash2 className="h-4 w-4" />
+                모든 환자 데이터 청소
+              </>
+            )}
+          </Button>
+
+          <Button
+            onClick={handleShowcase}
+            disabled={showcaseLoading !== 'idle'}
+            className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700"
+          >
+            {showcaseLoading === 'creating' ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                쇼케이스 생성 중...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4" />
+                쇼케이스 환자 2명 생성
+              </>
+            )}
+          </Button>
+
+          <p className="text-center text-[11px] text-slate-400">
+            추천 순서: 청소 → 쇼케이스 생성. 시연 직전 한 번 클릭으로 baseline 완료.
           </p>
         </CardContent>
       </Card>
