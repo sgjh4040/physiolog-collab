@@ -184,18 +184,26 @@ export async function getLatestTreatment(patientId: string): Promise<Treatment |
  * IN 쿼리 + 클라이언트 그룹화로 1회 round-trip으로 압축. 환자 50명 *
  * 평균 5건이면 ~250행, 모바일에서도 충분히 빠름.
  *
- * 반환: { [patientId]: 'YYYY-MM-DD' } — 치료 기록이 없는 환자는 키 자체 없음.
+ * 반환: { [patientId]: { date: 'YYYY-MM-DD', createdAt: ISO } }
+ *   - date: 표시용 (환자 카드 "마지막 치료 N일 전")
+ *   - createdAt: 같은 날짜 환자들 사이 tie-break용 (PatientList 최근순 정렬)
+ *   치료 기록이 없는 환자는 키 자체 없음.
  */
+export type LatestTreatmentInfo = {
+  date: string       // YYYY-MM-DD
+  createdAt: string  // ISO timestamp
+}
+
 export async function getLatestTreatmentDateMap(
   patientIds: string[]
-): Promise<Record<string, string>> {
+): Promise<Record<string, LatestTreatmentInfo>> {
   if (patientIds.length === 0) return {}
 
   const supabase = await createClient()
 
   const { data, error } = await supabase
     .from('treatments')
-    .select('patient_id, date')
+    .select('patient_id, date, created_at')
     .in('patient_id', patientIds)
     .order('date', { ascending: false })
     .order('created_at', { ascending: false })
@@ -205,11 +213,11 @@ export async function getLatestTreatmentDateMap(
     return {}
   }
 
-  // 정렬이 date desc라 각 patient_id의 첫 등장이 가장 최근.
-  const result: Record<string, string> = {}
+  // 정렬이 date desc + created_at desc라 각 patient_id의 첫 등장이 가장 최근.
+  const result: Record<string, LatestTreatmentInfo> = {}
   for (const row of data) {
     if (!(row.patient_id in result)) {
-      result[row.patient_id] = row.date
+      result[row.patient_id] = { date: row.date, createdAt: row.created_at }
     }
   }
   return result

@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/select'
 import { Edit3 } from 'lucide-react'
 import type { Patient } from '@/features/patients/domain/types'
+import type { LatestTreatmentInfo } from '@/lib/supabase/treatments'
 
 type UserProfile = { name: string; role: string; workplace: string }
 
@@ -32,8 +33,8 @@ const PAGE_SIZE = 9
 type PatientListProps = {
   /** Server component(page.tsx)에서 prefetch한 환자 목록 — useEffect fetch 대체 */
   initialPatients: Patient[]
-  /** Server에서 같은 round-trip으로 prefetch한 마지막 치료일 map */
-  initialLatestDates: Record<string, string>
+  /** Server에서 같은 round-trip으로 prefetch한 마지막 치료일 + timestamp map */
+  initialLatestDates: Record<string, LatestTreatmentInfo>
   /** Server에서 prefetch한 사용자 프로필 (헤더 좌상단 표시용, layout shift 방지) */
   initialUserProfile: UserProfile | null
 }
@@ -48,7 +49,7 @@ export function PatientList({
   //  요청이 같은 pipeline에서 큐잉되어 카드 클릭이 무반응으로 보이는 UX 버그
   //  + userProfile null → 도착 시 layout shift 발생)
   const [patients, setPatients] = useState<Patient[]>(initialPatients)
-  const [latestDates] = useState<Record<string, string>>(initialLatestDates)
+  const [latestDates] = useState<Record<string, LatestTreatmentInfo>>(initialLatestDates)
   const [userProfile] = useState<UserProfile | null>(initialUserProfile)
   const [query, setQuery] = useState('')
   const [activeTab, setActiveTab] = useState('active')
@@ -214,9 +215,18 @@ export function PatientList({
         return order[a.status] - order[b.status]
       }
       if (sortBy === 'recent') {
-        const dateA = lastTreatmentByPatient[a.id] || '0000-00-00'
-        const dateB = lastTreatmentByPatient[b.id] || '0000-00-00'
-        return dateB.localeCompare(dateA) // 최신순
+        // 1차: 마지막 치료 날짜(date) DESC
+        // 2차: 같은 날짜면 마지막 치료의 created_at(timestamp) DESC
+        //   → 같은 날 새로 치료 추가한 환자가 위로 (사용자 직관과 일치)
+        // 치료 기록 없는 환자는 맨 아래.
+        const infoA = lastTreatmentByPatient[a.id]
+        const infoB = lastTreatmentByPatient[b.id]
+        if (!infoA && !infoB) return 0
+        if (!infoA) return 1
+        if (!infoB) return -1
+        const dateDiff = infoB.date.localeCompare(infoA.date)
+        if (dateDiff !== 0) return dateDiff
+        return infoB.createdAt.localeCompare(infoA.createdAt)
       }
       if (sortBy === 'created') {
         return b.createdAt.localeCompare(a.createdAt)
@@ -355,7 +365,7 @@ export function PatientList({
             <PatientCard
               key={p.id}
               patient={p}
-              lastTreatmentDate={lastTreatmentByPatient[p.id]}
+              lastTreatmentDate={lastTreatmentByPatient[p.id]?.date}
               isSelectionMode={isSelectionMode}
               isSelected={selectedIds.includes(p.id)}
               onSelect={handleSelect}
