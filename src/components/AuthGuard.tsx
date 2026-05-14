@@ -39,10 +39,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
           transition={{ duration: 1, ease: "easeOut" }}
           className="flex flex-col items-center gap-8 text-center max-w-sm"
         >
-          {/* Atlas 워드마크 — iOS splash 이미지와 동일 톤. 브랜드 연속성. */}
+          {/* physiolog 워드마크 — splash 단일 소스(iOS 시스템 splash와 겹침 회피). */}
           <div className="flex flex-col items-center gap-1.5">
             <h1 className="text-5xl font-light tracking-tight text-foreground">
-              Atlas
+              physiolog
             </h1>
             <p className="text-[10px] font-medium tracking-[0.3em] uppercase text-muted-foreground/50">
               Physiotherapy charting

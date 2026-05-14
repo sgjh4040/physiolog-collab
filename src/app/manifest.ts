@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Atlas — 물리치료 차팅",
-    short_name: "Atlas",
+    name: "physiolog — 물리치료 차팅",
+    short_name: "physiolog",
     description: "정확한 평가는 치료의 가장 정직한 지도가 됩니다.",
     start_url: "/",
     display: "standalone",
