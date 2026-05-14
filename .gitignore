@@ -57,3 +57,6 @@ public/swe-worker-*.js
 .claude/*.lock
 .claude/cache/
 .claude/state/
+
+# AI 평가·시연 자료 (대회용 임시 산출물 — 공개 repo에 안 들어가도록)
+docs/evaluations/
