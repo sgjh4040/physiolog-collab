@@ -9,7 +9,7 @@ import { PatientCard } from './PatientCard'
 import { treatmentStore, evaluationStore } from '@/lib/storage'
 import { logout } from '@/lib/supabase/actions'
 import { deletePatient, updatePatient, getPatients } from '@/lib/supabase/patients'
-import { LogOut, Trash2, CheckCircle, CheckSquare, Square, X, BarChart2, ArrowUpDown, UserCircle } from 'lucide-react'
+import { LogOut, Trash2, CheckCircle, CheckSquare, Square, X, BarChart2, ArrowUpDown, UserCircle, MoreVertical } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useConfirm } from '@/components/confirm-dialog'
@@ -22,6 +22,13 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Edit3 } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import type { Patient } from '@/features/patients/domain/types'
 import type { LatestTreatmentInfo } from '@/lib/supabase/treatments'
 
@@ -245,16 +252,19 @@ export function PatientList({
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 p-4 pb-24 relative overflow-hidden">
-      <header className="flex items-start justify-between relative z-10">
-        <div className="flex flex-col gap-4">
+      <header className="flex items-start justify-between gap-3 relative z-10">
+        <div className="flex flex-col gap-4 min-w-0 flex-1">
           {userProfile && (
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-2">
-                <p className="text-base font-semibold text-foreground">
-                  {userProfile.name} <span className="text-xs font-normal text-muted-foreground">{userProfile.role}</span>
+            <div className="flex flex-col gap-1 min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <p className="text-base font-semibold text-foreground truncate min-w-0">
+                  {userProfile.name}{' '}
+                  <span className="text-xs font-normal text-muted-foreground">
+                    {userProfile.role}
+                  </span>
                 </p>
                 {userProfile.workplace && (
-                  <span className="text-[10px] font-bold text-primary bg-primary/5 px-1.5 py-0.5 rounded border border-primary/10">
+                  <span className="shrink-0 text-[10px] font-bold text-primary bg-primary/5 px-1.5 py-0.5 rounded border border-primary/10">
                     {userProfile.workplace}
                   </span>
                 )}
@@ -264,42 +274,69 @@ export function PatientList({
               </p>
             </div>
           )}
-          
+
           <h1 className="text-2xl font-bold tracking-tight">환자 목록</h1>
         </div>
-        <div className="flex items-center gap-1.5">
-          {process.env.NODE_ENV !== 'production' && (
-            <Button variant="ghost" size="icon" asChild title="데이터 생성 (dev only)" className="h-9 w-9">
-              <Link href="/seed">
-                <Plus className="h-4 w-4 text-blue-600" />
-              </Link>
-            </Button>
-          )}
-          <Button variant="ghost" size="icon" asChild title="프로필 설정" className="h-9 w-9">
-            <Link href="/profile">
-              <UserCircle className="h-4 w-4 text-muted-foreground" />
-            </Link>
-          </Button>
-          <Button variant="ghost" size="icon" asChild title="통계 분석" className="h-9 w-9">
-            <Link href="/statistics">
-              <BarChart2 className="h-4 w-4 text-muted-foreground" />
-            </Link>
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
+        <div className="flex items-center gap-1.5 shrink-0">
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => {
               setIsSelectionMode(!isSelectionMode)
               setSelectedIds([])
-            }} 
-            title={isSelectionMode ? "취소" : "선택 모드"} 
+            }}
+            title={isSelectionMode ? '취소' : '선택 모드'}
             className={`h-9 w-9 ${isSelectionMode ? 'bg-primary/10 text-primary' : ''}`}
           >
-            {isSelectionMode ? <X className="h-4 w-4" /> : <Edit3 className="h-4 w-4 text-muted-foreground" />}
+            {isSelectionMode ? (
+              <X className="h-4 w-4" />
+            ) : (
+              <Edit3 className="h-4 w-4 text-muted-foreground" />
+            )}
           </Button>
-          <Button variant="ghost" size="icon" onClick={handleLogout} title="로그아웃" className="h-9 w-9">
-            <LogOut className="h-4 w-4 text-muted-foreground" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                title="메뉴"
+                className="h-9 w-9"
+                aria-label="메뉴"
+              >
+                <MoreVertical className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              {process.env.NODE_ENV !== 'production' && (
+                <DropdownMenuItem asChild>
+                  <Link href="/seed" className="cursor-pointer">
+                    <Plus className="mr-2 h-4 w-4 text-blue-600" />
+                    데이터 생성 (dev)
+                  </Link>
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem asChild>
+                <Link href="/profile" className="cursor-pointer">
+                  <UserCircle className="mr-2 h-4 w-4" />
+                  프로필 설정
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/statistics" className="cursor-pointer">
+                  <BarChart2 className="mr-2 h-4 w-4" />
+                  통계 분석
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="cursor-pointer text-destructive focus:text-destructive"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                로그아웃
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
