@@ -33,6 +33,8 @@ export default function EditPatientPage({ params }: PageProps) {
     }
     toast.success('환자 정보 수정됨')
     router.replace(`/patients/${id}`)
+    // 페이지 unmount까지 isSubmitting 유지 — 버튼 깜빡임 방지
+    await new Promise(() => {})
   }
 
   if (patient === undefined) {

@@ -45,19 +45,21 @@ export default function NewEvaluationPage({ params }: PageProps) {
 
     const result = await createEvaluation(input)
 
-    if (result.success) {
-      if (values.toggleCustom && values.custom) {
-        values.custom.forEach((c) => {
-          if (c.name.trim()) {
-            evaluationFavoritesStore.recordEvaluationUsage(c.name)
-          }
-        })
-      }
-      toast.success('검사 저장됨')
-      router.replace(`/patients/${patientId}?tab=evaluations`)
-    } else {
+    if (!result.success) {
       toast.error('검사 기록 저장 실패', { description: result.error })
+      return
     }
+    if (values.toggleCustom && values.custom) {
+      values.custom.forEach((c) => {
+        if (c.name.trim()) {
+          evaluationFavoritesStore.recordEvaluationUsage(c.name)
+        }
+      })
+    }
+    toast.success('검사 저장됨')
+    router.replace(`/patients/${patientId}?tab=evaluations`)
+    // 페이지 unmount까지 isSubmitting 유지 — 버튼 깜빡임 방지
+    await new Promise(() => {})
   }
 
   if (patient === undefined) {

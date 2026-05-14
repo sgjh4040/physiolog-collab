@@ -62,7 +62,9 @@ export function PatientList({
   const [activeTab, setActiveTab] = useState('active')
   const [isSelectionMode, setIsSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
-  const [sortBy, setSortBy] = useState<'name' | 'status' | 'recent' | 'created'>('name')
+  // 기본값 'recent': 임상 워크플로우상 "오늘 본 환자가 위로" 가 가장 자연스러움.
+  // 사용자가 다른 옵션 선택 시 localStorage('physiolog_patient_sort')에 저장되어 그 후 그게 우선.
+  const [sortBy, setSortBy] = useState<'name' | 'status' | 'recent' | 'created'>('recent')
 
   // 무한 스크롤 — 한 번에 PAGE_SIZE개씩 점진 렌더링.
   // 모바일에서 환자 수십~수백 명 카드를 동시에 mount하면 첫 paint와

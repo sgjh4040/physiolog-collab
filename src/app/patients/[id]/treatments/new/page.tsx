@@ -80,14 +80,16 @@ export default function NewTreatmentPage({ params }: PageProps) {
       flags: values.flags,
     })
     
-    if (result.success) {
-      // 운동 즐겨찾기 빈도 업데이트
-      values.exercises.forEach((e) => exerciseFavoritesStore.recordExerciseUsage(e.name))
-      toast.success(copyMode ? '복사 저장 완료' : '치료 저장됨')
-      router.replace(`/patients/${patientId}?tab=treatments`)
-    } else {
+    if (!result.success) {
       toast.error('치료 기록 저장 실패', { description: result.error })
+      return
     }
+    // 운동 즐겨찾기 빈도 업데이트
+    values.exercises.forEach((e) => exerciseFavoritesStore.recordExerciseUsage(e.name))
+    toast.success(copyMode ? '복사 저장 완료' : '치료 저장됨')
+    router.replace(`/patients/${patientId}?tab=treatments`)
+    // 페이지 unmount까지 isSubmitting 유지 — 버튼 깜빡임 방지
+    await new Promise(() => {})
   }
 
   if (patient === undefined) {

@@ -41,12 +41,14 @@ export default function EditTreatmentPage({ params }: PageProps) {
       comment: values.comment,
       flags: values.flags,
     })
-    if (result.success) {
-      toast.success('치료 수정됨')
-      router.replace(`/patients/${patientId}?tab=treatments`)
-    } else {
+    if (!result.success) {
       toast.error('수정 실패', { description: result.error })
+      return
     }
+    toast.success('치료 수정됨')
+    router.replace(`/patients/${patientId}?tab=treatments`)
+    // 페이지 unmount까지 isSubmitting 유지 — 버튼 깜빡임 방지
+    await new Promise(() => {})
   }
 
   if (patient === undefined || treatment === undefined) {

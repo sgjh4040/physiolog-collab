@@ -43,12 +43,14 @@ export default function EditEvaluationPage({ params }: PageProps) {
       custom: values.toggleCustom ? values.custom : undefined,
     })
     
-    if (result.success) {
-      toast.success('검사 수정됨')
-      router.replace(`/patients/${patientId}?tab=evaluations`)
-    } else {
+    if (!result.success) {
       toast.error('검사 기록 수정 실패', { description: result.error })
+      return
     }
+    toast.success('검사 수정됨')
+    router.replace(`/patients/${patientId}?tab=evaluations`)
+    // 페이지 unmount까지 isSubmitting 유지 — 버튼 깜빡임 방지
+    await new Promise(() => {})
   }
 
   if (patient === undefined || evaluation === undefined) {
