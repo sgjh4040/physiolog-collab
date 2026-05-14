@@ -3,9 +3,17 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { ArrowLeft, Pencil } from 'lucide-react'
+import { ArrowLeft, Pencil, MoreVertical, FileText, Stethoscope } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { PatientInfo } from '@/features/patients/components/PatientInfo'
 import { TreatmentList } from '@/features/treatments/components/TreatmentList'
 import { EvaluationList } from '@/features/evaluations/components/EvaluationList'
@@ -64,11 +72,52 @@ export function PatientDetailView({
           </Link>
           <h1 className="truncate text-xl font-semibold">{patient.name}</h1>
         </div>
-        <Button asChild variant="outline" size="sm">
-          <Link href={`/patients/${patient.id}/edit`}>
-            <Pencil className="mr-1 h-4 w-4" />환자정보수정
-          </Link>
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/patients/${patient.id}/edit`}>
+              <Pencil className="mr-1 h-4 w-4" />환자정보수정
+            </Link>
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="추가 메뉴"
+                className="h-9 w-9"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuLabel>PDF 출력</DropdownMenuLabel>
+              <DropdownMenuItem asChild>
+                <Link
+                  href={`/patients/${patient.id}/print?type=summary`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  환자용 요약지
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link
+                  href={`/patients/${patient.id}/print?type=referral`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Stethoscope className="mr-2 h-4 w-4" />
+                  의뢰서
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem disabled className="text-xs text-muted-foreground">
+                새 탭에서 열립니다
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </header>
 
       <Tabs
