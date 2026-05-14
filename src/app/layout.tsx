@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthGuard } from "@/components/AuthGuard";
@@ -18,6 +18,19 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "physiolog",
   description: "물리치료사·트레이너용 환자 차팅 앱",
+  // iOS PWA가 manifest background_color를 거의 따르지 않으므로 별도 메타 태그로 명시.
+  // status bar 다크 + standalone 모드 + 앱 제목 (홈 화면 아이콘 아래 표시)
+  appleWebApp: {
+    capable: true,
+    title: "physiolog",
+    statusBarStyle: "black-translucent",
+  },
+};
+
+// Next.js 15+ 표준 viewport export — themeColor가 <meta name="theme-color"> 생성.
+// iOS Safari/PWA의 UI chrome 색상 (주소 표시줄, 상태 표시줄 등) 다크로.
+export const viewport: Viewport = {
+  themeColor: "#1c1c1c",
 };
 
 export default function RootLayout({
