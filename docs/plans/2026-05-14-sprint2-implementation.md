@@ -791,8 +791,9 @@ prod에서 critical 버그 발견 시 즉시 revert + 재배포.
 
 ## Out of Scope (Sprint 3로 미룸)
 
-- 운동 시간(분) 측정 필드 (S3-1)
-- PWA cold start splash (S3-2)
+- 치료방법별 상세 메모 (S3-1)
+- 운동 시간(분) 측정 필드 (S3-2)
+- PWA cold start splash (S3-3)
 - 헤더 전역 layout 추출 (환자 상세 페이지 헤더는 별도 작업)
 - 메뉴 항목별 단축키 (k 누르면 검색 등)
 - 사용자 프로필 사진 아바타 (현재 텍스트만)
