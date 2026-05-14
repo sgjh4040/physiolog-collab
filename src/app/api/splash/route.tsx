@@ -1,7 +1,9 @@
 import { ImageResponse } from 'next/og'
 import type { NextRequest } from 'next/server'
 
-export const runtime = 'edge'
+// edge runtime은 Hobby plan 1MB 한계 — next/og(satori+resvg)가 그 이상.
+// nodejs runtime은 Vercel function size 50MB까지 허용. ImageResponse는 두 runtime 다 지원.
+export const runtime = 'nodejs'
 
 /**
  * iOS PWA cold start용 동적 splash 이미지.
