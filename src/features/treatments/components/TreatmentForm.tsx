@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect } from 'react'
-import { FormProvider, useForm, type SubmitHandler } from 'react-hook-form'
+import { FormProvider, useForm, type FieldErrors, type SubmitHandler } from 'react-hook-form'
+import { toast } from 'sonner'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -65,6 +66,19 @@ export function TreatmentForm({
     await onSubmit(values)
   }
 
+  /**
+   * 필수 항목 미입력 시 폰에서 키보드 안 떠 인지 어려운 문제 해결 — toast로 알림.
+   * RHF의 shouldFocusError(default true)는 focus만, 시각 피드백 부족.
+   */
+  const handleInvalid = (errors: FieldErrors<TreatmentFormValues>) => {
+    const firstMessage = Object.values(errors)
+      .map((e) => (e && typeof e === 'object' && 'message' in e ? e.message : null))
+      .find((m): m is string => typeof m === 'string')
+    toast.error('필수 항목을 확인하세요', {
+      description: firstMessage ?? '빨간색으로 표시된 부분을 확인해주세요',
+    })
+  }
+
   const methods = form.watch('methods')
   const showExercise = methods?.includes('exercise')
 
@@ -73,7 +87,7 @@ export function TreatmentForm({
   return (
     <FormProvider {...form}>
       <form
-        onSubmit={form.handleSubmit(handleFormSubmit)}
+        onSubmit={form.handleSubmit(handleFormSubmit, handleInvalid)}
         className="flex flex-col gap-6 pb-24"
       >
         <Section title="치료 날짜">
@@ -107,12 +121,7 @@ export function TreatmentForm({
           )}
         </Section>
 
-        <Separator />
-
-        <Section title="오늘의 특이사항" subtitle="델타 플래그 · AI 재평가 요약에 활용됩니다" optional>
-          <FlagSelector />
-        </Section>
-
+        {/* 운동치료를 치료방법 직후로 — 사용자가 '운동치료' 체크 → 바로 아래에서 목적·운동 추가 */}
         {showExercise && (
           <>
             <Separator />
@@ -121,6 +130,12 @@ export function TreatmentForm({
             </Section>
           </>
         )}
+
+        <Separator />
+
+        <Section title="오늘의 특이사항" subtitle="델타 플래그 · AI 재평가 요약에 활용됩니다" optional>
+          <FlagSelector />
+        </Section>
 
         <Separator />
 

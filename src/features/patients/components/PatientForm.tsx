@@ -1,7 +1,8 @@
 'use client'
 
-import { useForm } from 'react-hook-form'
+import { useForm, type FieldErrors } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -70,10 +71,22 @@ export function PatientForm({
     defaultValues: { ...EMPTY_DEFAULTS, ...defaultValues },
   })
 
+  /**
+   * 필수 항목 미입력 시 폰에서 키보드 안 떠 인지 어려운 문제 해결 — toast로 알림.
+   */
+  const handleInvalid = (errors: FieldErrors<PatientFormValues>) => {
+    const firstMessage = Object.values(errors)
+      .map((e) => (e && typeof e === 'object' && 'message' in e ? e.message : null))
+      .find((m): m is string => typeof m === 'string')
+    toast.error('필수 항목을 확인하세요', {
+      description: firstMessage ?? '빨간색으로 표시된 부분을 확인해주세요',
+    })
+  }
+
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={form.handleSubmit(onSubmit, handleInvalid)}
         className="flex flex-col gap-6"
       >
         <Section title="기본 정보">

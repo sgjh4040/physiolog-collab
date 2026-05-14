@@ -1,7 +1,8 @@
 'use client'
 
-import { FormProvider, useForm, useFormContext } from 'react-hook-form'
+import { FormProvider, useForm, useFormContext, type FieldErrors } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -73,10 +74,22 @@ export function EvaluationForm({
     return onSubmit({ ...values, vas: computedVas })
   }
 
+  /**
+   * 필수 항목 미입력 시 폰에서 키보드 안 떠 인지 어려운 문제 해결 — toast로 알림.
+   */
+  const handleInvalid = (errors: FieldErrors<EvaluationFormValues>) => {
+    const firstMessage = Object.values(errors)
+      .map((e) => (e && typeof e === 'object' && 'message' in e ? e.message : null))
+      .find((m): m is string => typeof m === 'string')
+    toast.error('필수 항목을 확인하세요', {
+      description: firstMessage ?? '빨간색으로 표시된 부분을 확인해주세요',
+    })
+  }
+
   return (
     <FormProvider {...form}>
       <form
-        onSubmit={form.handleSubmit(submitWithVas)}
+        onSubmit={form.handleSubmit(submitWithVas, handleInvalid)}
         className="flex flex-col gap-5 pb-24"
       >
         <section className="flex flex-col gap-2">
