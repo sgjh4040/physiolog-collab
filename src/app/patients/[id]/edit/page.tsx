@@ -1,9 +1,8 @@
 'use client'
 
-import { use, useEffect, useState } from 'react'
-import Link from 'next/link'
+import { use, useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { PatientForm } from '@/features/patients/components/PatientForm'
 import { getPatient, updatePatient } from '@/lib/supabase/patients'
@@ -17,6 +16,7 @@ export default function EditPatientPage({ params }: PageProps) {
   const { id } = use(params)
   const router = useRouter()
   const [patient, setPatient] = useState<Patient | null | undefined>(undefined)
+  const [isBackPending, startBackTransition] = useTransition()
 
   useEffect(() => {
     async function load() {
@@ -68,13 +68,19 @@ export default function EditPatientPage({ params }: PageProps) {
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 p-4 pb-8">
       <header className="flex items-center gap-2">
-        <Link
-          href={`/patients/${id}`}
+        <button
+          type="button"
+          onClick={() => startBackTransition(() => router.push(`/patients/${id}`))}
+          disabled={isBackPending}
           aria-label="뒤로"
-          className="flex h-9 w-9 items-center justify-center rounded-md transition hover:bg-muted"
+          className="flex h-9 w-9 items-center justify-center rounded-md transition hover:bg-muted disabled:opacity-60"
         >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
+          {isBackPending ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <ArrowLeft className="h-5 w-5" />
+          )}
+        </button>
         <h1 className="text-xl font-semibold">환자 정보 수정</h1>
       </header>
 

@@ -1,9 +1,8 @@
 'use client'
 
-import { use, useEffect, useState } from 'react'
-import Link from 'next/link'
+import { use, useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { EvaluationForm } from '@/features/evaluations/components/EvaluationForm'
 import { getPatient } from '@/lib/supabase/patients'
@@ -20,6 +19,7 @@ export default function EditEvaluationPage({ params }: PageProps) {
   const router = useRouter()
   const [patient, setPatient] = useState<Patient | null | undefined>(undefined)
   const [evaluation, setEvaluation] = useState<Evaluation | null | undefined>(undefined)
+  const [isBackPending, startBackTransition] = useTransition()
 
   useEffect(() => {
     async function load() {
@@ -82,13 +82,23 @@ export default function EditEvaluationPage({ params }: PageProps) {
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 p-4">
       <header className="flex items-center gap-2">
-        <Link
-          href={`/patients/${patientId}?tab=evaluations`}
+        <button
+          type="button"
+          onClick={() =>
+            startBackTransition(() =>
+              router.push(`/patients/${patientId}?tab=evaluations`)
+            )
+          }
+          disabled={isBackPending}
           aria-label="뒤로"
-          className="flex h-9 w-9 items-center justify-center rounded-md transition hover:bg-muted"
+          className="flex h-9 w-9 items-center justify-center rounded-md transition hover:bg-muted disabled:opacity-60"
         >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
+          {isBackPending ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <ArrowLeft className="h-5 w-5" />
+          )}
+        </button>
         <div className="min-w-0 flex-1">
           <h1 className="text-xl font-semibold">검사 수정</h1>
           <p className="truncate text-sm text-muted-foreground">{patient.name}</p>
