@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthGuard } from "@/components/AuthGuard";
 import { ConfirmDialogProvider } from "@/components/confirm-dialog";
+import { ServiceWorkerUpdateToast } from "@/components/ServiceWorkerUpdateToast";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -57,10 +58,10 @@ export default function RootLayout({
             {children}
           </ConfirmDialogProvider>
         </AuthGuard>
-        <Toaster 
-          position="top-center" 
-          duration={2000} 
-          closeButton 
+        <Toaster
+          position="top-center"
+          duration={2000}
+          closeButton
           toastOptions={{
             style: {
               background: '#1f2937', // Dark contrast background
@@ -72,6 +73,7 @@ export default function RootLayout({
             },
           }}
         />
+        <ServiceWorkerUpdateToast />
       </body>
     </html>
   );
