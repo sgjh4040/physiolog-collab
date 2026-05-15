@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { login, getSession } from '@/lib/supabase/actions'
+import { readString, writeString, removeKey, STORAGE_KEYS } from '@/lib/storage'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -17,8 +18,6 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-  const ID_STORAGE_KEY = 'physiolog_remembered_email'
-
   useEffect(() => {
     // 세션 체크
     getSession().then(session => {
@@ -27,8 +26,8 @@ export default function LoginPage() {
       }
     })
 
-    // 저장된 아이디 불러오기 — localStorage(외부 시스템) 동기화
-    const savedEmail = localStorage.getItem(ID_STORAGE_KEY)
+    // 저장된 아이디 불러오기 — localStorage 래퍼 경유 (SSR 안전)
+    const savedEmail = readString(STORAGE_KEYS.rememberedEmail, '')
     if (savedEmail) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setEmail(savedEmail)
@@ -43,9 +42,9 @@ export default function LoginPage() {
 
     // 아이디 저장 로직
     if (rememberId) {
-      localStorage.setItem(ID_STORAGE_KEY, email)
+      writeString(STORAGE_KEYS.rememberedEmail, email)
     } else {
-      localStorage.removeItem(ID_STORAGE_KEY)
+      removeKey(STORAGE_KEYS.rememberedEmail)
     }
 
     const formData = new FormData()

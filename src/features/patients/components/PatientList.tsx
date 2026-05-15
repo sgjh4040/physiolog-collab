@@ -6,7 +6,7 @@ import { Plus, Search, Users } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { PatientCard } from './PatientCard'
-import { treatmentStore, evaluationStore } from '@/lib/storage'
+import { treatmentStore, evaluationStore, readString, writeString, STORAGE_KEYS } from '@/lib/storage'
 import { logout } from '@/lib/supabase/actions'
 import { deletePatient, updatePatient, getPatients } from '@/lib/supabase/patients'
 import { LogOut, Trash2, CheckCircle, CheckSquare, Square, X, BarChart2, ArrowUpDown, UserCircle, MoreVertical } from 'lucide-react'
@@ -79,7 +79,7 @@ export function PatientList({
 
   useEffect(() => {
     // 저장된 정렬 기준 불러오기 — localStorage 동기화 (client only)
-    const savedSort = localStorage.getItem('physiolog_patient_sort')
+    const savedSort = readString(STORAGE_KEYS.patientSort, '')
     if (savedSort && ['name', 'status', 'recent', 'created'].includes(savedSort)) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSortBy(savedSort as 'name' | 'status' | 'recent' | 'created')
@@ -120,7 +120,7 @@ export function PatientList({
 
   const handleSortChange = (val: 'name' | 'status' | 'recent' | 'created') => {
     setSortBy(val)
-    localStorage.setItem('physiolog_patient_sort', val)
+    writeString(STORAGE_KEYS.patientSort, val)
   }
 
   const handleLogout = async () => {
