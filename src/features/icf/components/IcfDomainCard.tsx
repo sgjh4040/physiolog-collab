@@ -22,21 +22,9 @@ export function IcfDomainCard({ domainKey, items, index }: Props) {
       transition={{ duration: 0.3, delay: index * 0.08 }}
       className={`rounded-xl border p-4 shadow-sm transition-shadow hover:shadow-md ${meta.bg} ${meta.border}`}
     >
-      <div className="mb-3 flex items-center justify-between">
-        <p className={`text-xs font-bold uppercase tracking-wider ${meta.color}`}>
-          {meta.label}
-        </p>
-        <span
-          aria-label={`${meta.label} 항목 ${items.length}개`}
-          className={`inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1.5 text-[10px] font-bold tabular-nums ${
-            isEmpty
-              ? 'bg-muted/60 text-muted-foreground/50'
-              : `${meta.color.replace('text-', 'bg-').replace('-600', '-100')} ${meta.color}`
-          }`}
-        >
-          {items.length}
-        </span>
-      </div>
+      <p className={`mb-3 text-xs font-bold uppercase tracking-wider ${meta.color}`}>
+        {meta.label}
+      </p>
 
       {isEmpty ? (
         <p className="text-[11px] text-muted-foreground/60 italic">정보 미확인</p>
