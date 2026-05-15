@@ -6,6 +6,7 @@ import { Brain, CheckSquare, Plus, Square, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { IcfDomainCard } from './IcfDomainCard'
+import { GlossaryText } from './GlossaryText'
 import { getIcfAssessments, deleteIcfAssessment } from '@/lib/supabase/icf'
 import { useConfirm } from '@/components/confirm-dialog'
 import { DOMAIN_KEYS, DOMAIN_META, type IcfAssessment } from '@/features/icf/domain/types'
@@ -192,7 +193,9 @@ export function IcfTab({ patientId, initialAssessments }: Props) {
               {a.finalNote && (
                 <div className="rounded-lg border bg-muted/40 p-3">
                   <p className="mb-1 text-xs font-semibold text-muted-foreground">임상 추론 요약</p>
-                  <p className="text-sm leading-relaxed">{a.finalNote}</p>
+                  <p className="text-sm leading-relaxed">
+                    <GlossaryText text={a.finalNote} />
+                  </p>
                 </div>
               )}
 

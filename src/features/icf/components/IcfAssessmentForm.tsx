@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { IcfDomainCard } from './IcfDomainCard'
+import { GlossaryText } from './GlossaryText'
 import { createIcfAssessment } from '@/lib/supabase/icf'
 import { getPatient } from '@/lib/supabase/patients'
 import { getEvaluations } from '@/lib/supabase/evaluations'
@@ -285,7 +286,9 @@ export function IcfAssessmentForm({ patientId }: Props) {
                 </div>
                 <ul className="ml-7 list-disc space-y-1 text-sm text-red-800">
                   {allRedFlags.map((flag, idx) => (
-                    <li key={idx} className="leading-relaxed">{flag}</li>
+                    <li key={idx} className="leading-relaxed">
+                      <GlossaryText text={flag} />
+                    </li>
                   ))}
                 </ul>
               </motion.section>
@@ -315,7 +318,9 @@ export function IcfAssessmentForm({ patientId }: Props) {
                 className="rounded-lg border bg-muted/40 p-3"
               >
                 <p className="mb-1 text-xs font-semibold text-muted-foreground">임상 추론 요약</p>
-                <p className="text-sm leading-relaxed">{currentResult.clinicalNote}</p>
+                <p className="text-sm leading-relaxed">
+                  <GlossaryText text={currentResult.clinicalNote} />
+                </p>
               </motion.section>
             )}
 
@@ -331,7 +336,9 @@ export function IcfAssessmentForm({ patientId }: Props) {
                   <MessageSquare className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                   <div className="flex flex-col gap-1">
                     <p className="text-xs font-semibold text-primary">AI 추가 질문</p>
-                    <p className="text-sm leading-relaxed">{currentResult.followUpQuestion}</p>
+                    <p className="text-sm leading-relaxed">
+                      <GlossaryText text={currentResult.followUpQuestion} />
+                    </p>
                   </div>
                 </div>
                 <Textarea

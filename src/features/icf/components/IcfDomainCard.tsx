@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { DOMAIN_META, type IcfDomainKey } from '@/features/icf/domain/types'
+import { GlossaryText } from './GlossaryText'
 
 interface Props {
   domainKey: IcfDomainKey
@@ -35,7 +36,7 @@ export function IcfDomainCard({ domainKey, items, index }: Props) {
           {items.map((item, i) => (
             <li key={i} className="flex items-start gap-2 text-xs text-foreground/90 leading-tight">
               <span className="mt-1 text-[10px] opacity-40">•</span>
-              {item}
+              <GlossaryText text={item} />
             </li>
           ))}
         </ul>
