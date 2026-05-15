@@ -26,7 +26,16 @@ export function IcfDomainCard({ domainKey, items, index }: Props) {
         <p className={`text-xs font-bold uppercase tracking-wider ${meta.color}`}>
           {meta.label}
         </p>
-        <span className={`h-1.5 w-1.5 rounded-full ${meta.color.replace('text-', 'bg-')}`} />
+        <span
+          aria-label={`${meta.label} 항목 ${items.length}개`}
+          className={`inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1.5 text-[10px] font-bold tabular-nums ${
+            isEmpty
+              ? 'bg-muted/60 text-muted-foreground/50'
+              : `${meta.color.replace('text-', 'bg-').replace('-600', '-100')} ${meta.color}`
+          }`}
+        >
+          {items.length}
+        </span>
       </div>
 
       {isEmpty ? (
