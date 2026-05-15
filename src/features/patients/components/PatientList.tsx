@@ -17,7 +17,7 @@ import {
 import { readString, writeString, STORAGE_KEYS } from '@/lib/storage'
 import { logout } from '@/lib/supabase/actions'
 import { deletePatient, updatePatient, getPatients } from '@/lib/supabase/patients'
-import { LogOut, Trash2, CheckCircle, CheckSquare, Square, X, BarChart2, UserCircle, MoreVertical } from 'lucide-react'
+import { LogOut, Trash2, CheckCircle, CheckSquare, Square, X, UserCircle, MoreVertical } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useConfirm } from '@/components/confirm-dialog'
@@ -225,12 +225,6 @@ export function PatientList({
                 <Link href="/profile" className="cursor-pointer">
                   <UserCircle className="mr-2 h-4 w-4" />
                   프로필 설정
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/statistics" className="cursor-pointer">
-                  <BarChart2 className="mr-2 h-4 w-4" />
-                  통계 분석
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
