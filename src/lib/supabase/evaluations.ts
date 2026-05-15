@@ -34,6 +34,7 @@ export async function getEvaluations(patientId: string): Promise<Evaluation[]> {
     .select('*')
     .eq('patient_id', patientId)
     .order('date', { ascending: false })
+    .order('created_at', { ascending: false })
 
   if (error) {
     console.error('Error fetching evaluations:', error)

@@ -9,7 +9,12 @@ import { newId, nowISO, readJSON, writeJSON } from './base'
 
 export function getEvaluations(patientId: string): Evaluation[] {
   const list = readJSON<Evaluation[]>(STORAGE_KEYS.evaluations(patientId), [])
-  return [...list].sort((a, b) => b.date.localeCompare(a.date))
+  // 최신순 — 같은 날짜는 createdAt DESC 보조 정렬로 더 최근 등록이 위
+  return [...list].sort((a, b) => {
+    const byDate = b.date.localeCompare(a.date)
+    if (byDate !== 0) return byDate
+    return b.createdAt.localeCompare(a.createdAt)
+  })
 }
 
 export function getEvaluation(patientId: string, id: string): Evaluation | undefined {

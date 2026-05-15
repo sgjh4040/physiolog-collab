@@ -23,6 +23,7 @@ export async function getIcfAssessments(patientId: string): Promise<IcfAssessmen
     .select('*')
     .eq('patient_id', patientId)
     .order('date', { ascending: false })
+    .order('created_at', { ascending: false })
 
   if (error) {
     console.error('Error fetching ICF assessments:', error)
