@@ -174,8 +174,13 @@ export function PatientList({
     pageSize: PAGE_SIZE,
   })
 
+  // 카드가 1개일 때 lg에서 2열 grid는 우측이 비어 보임 → 단일 컬럼 + 좁은 max-width로 fallback
+  const isSingleCard = filtered.length === 1
+
   return (
-    <div className="mx-auto flex w-full max-w-2xl lg:max-w-5xl flex-1 flex-col gap-4 p-4 pb-24 relative overflow-hidden">
+    <div
+      className={`mx-auto flex w-full max-w-2xl ${isSingleCard ? '' : 'lg:max-w-5xl'} flex-1 flex-col gap-4 p-4 pb-24 relative overflow-hidden`}
+    >
       <header className="flex items-start justify-between gap-3 relative z-10">
         <UserProfileHeader profile={userProfile} />
         <div className="flex items-center gap-1.5 shrink-0">
@@ -256,7 +261,9 @@ export function PatientList({
           <EmptyState hasPatients={patients.length > 0} />
         </div>
       ) : (
-        <div className="flex flex-col gap-2 lg:grid lg:grid-cols-2 lg:gap-3 relative z-10 flex-1 content-start">
+        <div
+          className={`flex flex-col gap-2 ${isSingleCard ? '' : 'lg:grid lg:grid-cols-2 lg:gap-3'} relative z-10 flex-1 content-start`}
+        >
           {isSelectionMode && filtered.length > 0 && (
             <Button
               variant="ghost"
