@@ -253,7 +253,7 @@ export function PatientList({
   }, [patients])
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 p-4 pb-24 relative overflow-hidden">
+    <div className="mx-auto flex w-full max-w-2xl lg:max-w-5xl flex-1 flex-col gap-4 p-4 pb-24 relative overflow-hidden">
       <header className="flex items-start justify-between gap-3 relative z-10">
         <div className="flex flex-col gap-4 min-w-0 flex-1">
           {userProfile && (
@@ -388,7 +388,7 @@ export function PatientList({
           <EmptyState hasPatients={patients.length > 0} />
         </div>
       ) : (
-        <div className="flex flex-col gap-2 relative z-10 flex-1">
+        <div className="flex flex-col gap-2 lg:grid lg:grid-cols-2 lg:gap-3 relative z-10 flex-1 content-start">
           {isSelectionMode && filtered.length > 0 && (
             <Button
               variant="ghost"

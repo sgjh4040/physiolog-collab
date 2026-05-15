@@ -60,7 +60,7 @@ export function PatientDetailView({
   }, [tabFromUrl])
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 p-4 pb-8">
+    <div className="mx-auto flex w-full max-w-2xl lg:max-w-3xl flex-1 flex-col gap-4 p-4 pb-8">
       <header className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <Link
