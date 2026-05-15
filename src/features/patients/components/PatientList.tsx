@@ -1,26 +1,26 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Plus, Search, Users } from 'lucide-react'
-import { Input } from '@/components/ui/input'
+import { Plus, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PatientCard } from './PatientCard'
-import { treatmentStore, evaluationStore, readString, writeString, STORAGE_KEYS } from '@/lib/storage'
+import { UserProfileHeader, type UserProfile } from './UserProfileHeader'
+import { PatientFilters } from './PatientFilters'
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
+import {
+  filterAndSortPatients,
+  countByStatus,
+  type SortMode,
+  type ActiveTab,
+} from '../domain/patient-filters'
+import { readString, writeString, STORAGE_KEYS } from '@/lib/storage'
 import { logout } from '@/lib/supabase/actions'
 import { deletePatient, updatePatient, getPatients } from '@/lib/supabase/patients'
-import { LogOut, Trash2, CheckCircle, CheckSquare, Square, X, BarChart2, ArrowUpDown, UserCircle, MoreVertical } from 'lucide-react'
+import { LogOut, Trash2, CheckCircle, CheckSquare, Square, X, BarChart2, UserCircle, MoreVertical } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useConfirm } from '@/components/confirm-dialog'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Edit3 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -31,8 +31,6 @@ import {
 } from '@/components/ui/dropdown-menu'
 import type { Patient } from '@/features/patients/domain/types'
 import type { LatestTreatmentInfo } from '@/lib/supabase/treatments'
-
-type UserProfile = { name: string; role: string; workplace: string }
 
 /** 첫 화면 + 무한 스크롤 시 한 번에 추가로 렌더링할 환자 수. */
 const PAGE_SIZE = 9
@@ -59,20 +57,12 @@ export function PatientList({
   const [latestDates] = useState<Record<string, LatestTreatmentInfo>>(initialLatestDates)
   const [userProfile] = useState<UserProfile | null>(initialUserProfile)
   const [query, setQuery] = useState('')
-  const [activeTab, setActiveTab] = useState('active')
+  const [activeTab, setActiveTab] = useState<ActiveTab>('active')
   const [isSelectionMode, setIsSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   // 기본값 'recent': 임상 워크플로우상 "오늘 본 환자가 위로" 가 가장 자연스러움.
-  // 사용자가 다른 옵션 선택 시 localStorage('physiolog_patient_sort')에 저장되어 그 후 그게 우선.
-  const [sortBy, setSortBy] = useState<'name' | 'status' | 'recent' | 'created'>('recent')
-
-  // 무한 스크롤 — 한 번에 PAGE_SIZE개씩 점진 렌더링.
-  // 모바일에서 환자 수십~수백 명 카드를 동시에 mount하면 첫 paint와
-  // scroll 성능이 저하되므로 viewport 진입 시점에 9개씩 추가.
-  // (server fetch는 모든 환자 받음 — 검색/정렬을 client로 즉시 처리하기 위함.
-  //  환자 수가 200+ 되면 server pagination도 추가 검토.)
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
-  const sentinelRef = useRef<HTMLDivElement | null>(null)
+  // 사용자가 다른 옵션 선택 시 STORAGE_KEYS.patientSort에 저장되어 그 후 그게 우선.
+  const [sortBy, setSortBy] = useState<SortMode>('recent')
 
   const router = useRouter()
   const confirm = useConfirm()
@@ -82,43 +72,11 @@ export function PatientList({
     const savedSort = readString(STORAGE_KEYS.patientSort, '')
     if (savedSort && ['name', 'status', 'recent', 'created'].includes(savedSort)) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSortBy(savedSort as 'name' | 'status' | 'recent' | 'created')
+      setSortBy(savedSort as SortMode)
     }
   }, [])
 
-  // 검색어/탭/정렬 바뀌면 visible 리셋 (다른 결과 셋의 첫 9개부터)
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setVisibleCount(PAGE_SIZE)
-  }, [query, activeTab, sortBy])
-
-  // 무한 스크롤 — scroll event listener로 sentinel이 viewport 근처면 +PAGE_SIZE.
-  // (IntersectionObserver를 처음 시도했지만 한계가 있었음: 등록 직후 자동 fire는
-  //  무시할 수 있어도 사용자가 한 번에 바닥까지 스크롤하면 sentinel이 줄곧
-  //  viewport 안에 머무르며 '상태 변화'가 없어 추가 fire가 안 발생함.)
-  // sentinel 자체는 visibleCount < filtered.length일 때만 렌더되므로
-  // 다 보이면 sentinelRef.current=null → skip.
-  useEffect(() => {
-    let ticking = false
-    const onScroll = () => {
-      if (ticking) return
-      const sentinel = sentinelRef.current
-      if (!sentinel) return // 다 보임 = skip
-      ticking = true
-      requestAnimationFrame(() => {
-        const rect = sentinel.getBoundingClientRect()
-        // sentinel 윗변이 viewport 바닥 + 100px 안으로 들어오면 trigger
-        if (rect.top < window.innerHeight + 100) {
-          setVisibleCount((c) => c + PAGE_SIZE)
-        }
-        ticking = false
-      })
-    }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
-  const handleSortChange = (val: 'name' | 'status' | 'recent' | 'created') => {
+  const handleSortChange = (val: SortMode) => {
     setSortBy(val)
     writeString(STORAGE_KEYS.patientSort, val)
   }
@@ -192,93 +150,34 @@ export function PatientList({
     setSelectedIds([])
   }
 
-  const lastTreatmentByPatient = useMemo(() => {
-    return latestDates
-  }, [latestDates])
+  const lastTreatmentByPatient = latestDates
 
-  // React Compiler가 자동 메모이즈하지만 명시적 useMemo도 유지 (호환 의도, 향후 컴파일러 정착 시 제거 검토)
+  // React Compiler가 자동 메모이즈하지만 명시적 useMemo 유지 (호환 의도, 향후 컴파일러 정착 시 제거 검토)
   // eslint-disable-next-line react-hooks/preserve-manual-memoization
-  const filtered = useMemo(() => {
-    let result = patients
+  const filtered = useMemo(
+    () =>
+      filterAndSortPatients(patients, {
+        query,
+        activeTab,
+        sortBy,
+        latestByPatient: lastTreatmentByPatient,
+      }),
+    [patients, query, activeTab, sortBy, lastTreatmentByPatient],
+  )
 
-    // 탭 필터링
-    if (activeTab === 'active') {
-      result = result.filter((p) => p.status !== 'discharged')
-    } else if (activeTab === 'discharged') {
-      result = result.filter((p) => p.status === 'discharged')
-    }
+  const counts = useMemo(() => countByStatus(patients), [patients])
 
-    // 검색어 필터링
-    const q = query.trim().toLowerCase()
-    if (q) {
-      result = result.filter((p) => p.name.toLowerCase().includes(q))
-    }
-
-    // 정렬 로직
-    return [...result].sort((a, b) => {
-      if (sortBy === 'name') {
-        return a.name.localeCompare(b.name, 'ko')
-      }
-      if (sortBy === 'status') {
-        const order = { new: 0, readmit: 1, hold: 2, discharged: 3 }
-        return order[a.status] - order[b.status]
-      }
-      if (sortBy === 'recent') {
-        // 1차: 마지막 치료 날짜(date) DESC
-        // 2차: 같은 날짜면 마지막 치료의 created_at(timestamp) DESC
-        //   → 같은 날 새로 치료 추가한 환자가 위로 (사용자 직관과 일치)
-        // 치료 기록 없는 환자는 맨 아래.
-        const infoA = lastTreatmentByPatient[a.id]
-        const infoB = lastTreatmentByPatient[b.id]
-        if (!infoA && !infoB) return 0
-        if (!infoA) return 1
-        if (!infoB) return -1
-        const dateDiff = infoB.date.localeCompare(infoA.date)
-        if (dateDiff !== 0) return dateDiff
-        return infoB.createdAt.localeCompare(infoA.createdAt)
-      }
-      if (sortBy === 'created') {
-        return b.createdAt.localeCompare(a.createdAt)
-      }
-      return 0
-    })
-  }, [patients, query, activeTab, sortBy, lastTreatmentByPatient])
-
-  const counts = useMemo(() => {
-    return {
-      all: patients.length,
-      active: patients.filter((p) => p.status !== 'discharged').length,
-      closed: patients.filter((p) => p.status === 'discharged').length,
-    }
-  }, [patients])
+  // 무한 스크롤 — sentinel 진입 시 PAGE_SIZE씩 추가. 검색·탭·정렬 변경 시 첫 페이지로 리셋.
+  const { visibleCount, sentinelRef } = useInfiniteScroll({
+    totalCount: filtered.length,
+    resetDeps: [query, activeTab, sortBy],
+    pageSize: PAGE_SIZE,
+  })
 
   return (
     <div className="mx-auto flex w-full max-w-2xl lg:max-w-5xl flex-1 flex-col gap-4 p-4 pb-24 relative overflow-hidden">
       <header className="flex items-start justify-between gap-3 relative z-10">
-        <div className="flex flex-col gap-4 min-w-0 flex-1">
-          {userProfile && (
-            <div className="flex flex-col gap-1 min-w-0">
-              <div className="flex items-center gap-2 min-w-0">
-                <p className="text-base font-semibold text-foreground truncate min-w-0">
-                  {userProfile.name}{' '}
-                  <span className="text-xs font-normal text-muted-foreground">
-                    {userProfile.role}
-                  </span>
-                </p>
-                {userProfile.workplace && (
-                  <span className="shrink-0 text-[10px] font-bold text-primary bg-primary/5 px-1.5 py-0.5 rounded border border-primary/10">
-                    {userProfile.workplace}
-                  </span>
-                )}
-              </div>
-              <p className="text-[10px] text-muted-foreground/60 tracking-wider uppercase font-medium">
-                Expert Healthcare Provider
-              </p>
-            </div>
-          )}
-
-          <h1 className="text-2xl font-bold tracking-tight">환자 목록</h1>
-        </div>
+        <UserProfileHeader profile={userProfile} />
         <div className="flex items-center gap-1.5 shrink-0">
           <Button
             variant="ghost"
@@ -342,46 +241,15 @@ export function PatientList({
         </div>
       </header>
 
-      <div className="flex flex-col gap-3 relative z-10">
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/80" />
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="이름으로 검색"
-              className="pl-9 bg-muted/40 border-muted-foreground/20 focus:bg-background transition-all shadow-sm focus:shadow-md"
-            />
-          </div>
-          <Select value={sortBy} onValueChange={handleSortChange}>
-            <SelectTrigger className="h-10 w-[120px] text-xs bg-muted/40 border-muted-foreground/20 shadow-sm">
-              <div className="flex items-center gap-1.5">
-                <SelectValue />
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="name">가나다순</SelectItem>
-              <SelectItem value="status">상태</SelectItem>
-              <SelectItem value="recent">최근 치료순</SelectItem>
-              <SelectItem value="created">최근 등록순</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-muted/30 p-1">
-            <TabsTrigger value="active" className="text-xs sm:text-sm">
-              치료 중 <span className="ml-1 opacity-60 font-mono">{counts.active}</span>
-            </TabsTrigger>
-            <TabsTrigger value="discharged" className="text-xs sm:text-sm">
-              종결 <span className="ml-1 opacity-60 font-mono">{counts.closed}</span>
-            </TabsTrigger>
-            <TabsTrigger value="all" className="text-xs sm:text-sm">
-              전체 <span className="ml-1 opacity-60 font-mono">{counts.all}</span>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
+      <PatientFilters
+        query={query}
+        onQueryChange={setQuery}
+        sortBy={sortBy}
+        onSortChange={handleSortChange}
+        activeTab={activeTab}
+        onActiveTabChange={setActiveTab}
+        counts={counts}
+      />
 
       {filtered.length === 0 ? (
         <div className="relative z-10 flex-1">
