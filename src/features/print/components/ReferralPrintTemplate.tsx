@@ -92,7 +92,8 @@ export function ReferralPrintTemplate({
     (e.rom && e.rom.length > 0) ||
     (e.mmt && e.mmt.length > 0) ||
     (e.bodyMeasurement && e.bodyMeasurement.length > 0) ||
-    (e.painMapping && e.painMapping.length > 0),
+    (e.painMapping && e.painMapping.length > 0) ||
+    (e.custom && e.custom.length > 0),
   )
   const latestIcf = icfAssessments[0]
 
@@ -246,6 +247,12 @@ export function ReferralPrintTemplate({
                   </td>
                 </tr>
               )}
+              {latestEval.custom?.map((c, i) => (
+                <tr key={`custom-${i}`} className="border-b border-slate-300">
+                  <td className="px-2 py-1 font-medium text-slate-700">{c.name}</td>
+                  <td className="px-2 py-1 text-slate-900">{c.value}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </section>
