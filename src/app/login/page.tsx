@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { login, getSession } from '@/lib/supabase/actions'
+import { login, getSession, loginWithKakao } from '@/lib/supabase/actions'
 import { readString, writeString, removeKey, STORAGE_KEYS } from '@/lib/storage'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -129,15 +129,46 @@ export default function LoginPage() {
               </label>
             </div>
             
-            <Button 
-              type="submit" 
-              className="w-full h-11 text-base font-semibold shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all active:scale-[0.98]" 
+            <Button
+              type="submit"
+              className="w-full h-11 text-base font-semibold shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all active:scale-[0.98]"
               disabled={isLoading}
             >
               {isLoading ? '보안 연결 중...' : '시스템 접속'}
             </Button>
           </form>
-          
+
+          {/* OAuth 구분선 + 카카오 로그인 */}
+          <div className="my-6 flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-[11px] uppercase tracking-wider text-muted-foreground/70">또는</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          <Button
+            type="button"
+            onClick={async () => {
+              setIsLoading(true)
+              const result = await loginWithKakao()
+              if (result?.error) {
+                toast.error(result.error)
+                setIsLoading(false)
+                return
+              }
+              if (result?.url) {
+                window.location.href = result.url
+              }
+            }}
+            disabled={isLoading}
+            className="w-full h-11 text-base font-semibold bg-[#FEE500] hover:bg-[#FEE500]/90 text-[#191919] shadow-lg shadow-yellow-500/10 hover:shadow-xl transition-all active:scale-[0.98]"
+            aria-label="카카오로 로그인"
+          >
+            <svg className="mr-1 h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+              <path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.797 1.864 5.25 4.66 6.625L5.4 21.6l4.95-3.25c.54.067 1.092.1 1.65.1 5.523 0 10-3.477 10-7.8S17.523 3 12 3z" />
+            </svg>
+            카카오로 로그인
+          </Button>
+
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
               계정이 없으신가요?{' '}

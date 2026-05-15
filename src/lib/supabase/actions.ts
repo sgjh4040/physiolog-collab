@@ -44,6 +44,30 @@ export async function signup(formData: FormData) {
   return { success: true }
 }
 
+/**
+ * 카카오 OAuth 로그인 시작 — Supabase Auth가 발급하는 카카오 인증 URL을 반환.
+ * 클라이언트는 이 URL로 window.location.href를 갱신해 카카오로 이동한다.
+ * 카카오 로그인·동의 → Supabase callback → /auth/callback?code=... 으로 돌아옴.
+ *
+ * Supabase Dashboard → Authentication → Providers → Kakao 활성화 + 키 등록 필요.
+ */
+export async function loginWithKakao() {
+  const supabase = await createClient()
+  const origin = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'kakao',
+    options: {
+      redirectTo: `${origin}/auth/callback`,
+    },
+  })
+
+  if (error) {
+    return { error: error.message }
+  }
+  return { url: data.url }
+}
+
 export async function logout() {
   const supabase = await createClient()
   await supabase.auth.signOut()
