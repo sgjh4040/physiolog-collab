@@ -1,220 +1,405 @@
-# physiolog — Product Requirements Document (PRD)
+# physiolog — Product Requirements Document
 
-> **⚠️ 모든 코드 작성 전 이 문서를 반드시 먼저 읽을 것.**
-> 친구의 원본 PRD v1.6은 22주 풀버전 — 우리는 MVP 스코프만 유지.
+> 최종 갱신: 2026-05-15 / Phase 1 (MVP) 인계 직전 상태 반영.
+> 친구 원본 PRD v1.6은 22주 풀버전(`docs/PhysioLog_PRD_v1.6.docx`) — 우리는 압축 MVP.
 
 ---
 
-## 🎯 프로젝트 개요
+## 1. 프로젝트 개요
 
 | 항목 | 내용 |
 |---|---|
 | **앱 이름** | physiolog |
-| **대상 사용자** | 물리치료사, 트레이너 |
-| **핵심 목적** | 환자 1인당 차팅 시간 10~20분 → **5분 이내** 단축 |
-| **목표 사용자 수** | 친구(물리치료사) 1명 실사용 → 피드백 기반 확장 |
-| **개발 기간** | 1~2개월 |
-| **프론트엔드** | Next.js 16 + React 19 + TypeScript |
-| **스타일링** | Tailwind CSS 4 + shadcn/ui (Nova preset) |
-| **상태 관리** | React 훅 + localStorage |
-| **백엔드/DB** | 없음 (localStorage). Phase 2에서 Supabase 검토 |
-| **배포 목표** | Vercel + PWA (폰 홈에 추가) |
+| **대상 사용자** | 물리치료사·트레이너 (1차: 친구 현직 PT, 2차: 임상 동료 1~2명) |
+| **핵심 KPI** | 환자 1인당 차팅 시간 **10~20분 → 5분 이내** |
+| **차별점** | WHO **ICF**(International Classification of Functioning) 기반 임상 추론 보조 AI |
+| **사전 평가** | AI 심사관 평가 9.18 / 10 (A+) — `docs/evaluations/2026-05-14-ai-judge-evaluation.md` |
+| **개발 규모** | 98 commit · 1681줄 풀 임상 시드 · 162줄 ICF 시스템 프롬프트 |
+| **배포** | Vercel + PWA (병원 와이파이 불안정 대비) |
+
+### 의사결정 압축 흔적
+
+원본 PRD 22주 풀버전(이중 EHR 연동·다국어·STT·BLE·AI 헬스장 통합 포함) → MVP 14주 → 실제 1~2개월 압축. 압축 원칙:
+
+1. **차팅 시간 단축**이라는 KPI에 직접 기여하는 기능만 Phase 1
+2. **AI는 깊이로**: 분량 적게, 임상 추론·red flag·맥락 RAG까지 깊이 있게
+3. **임상 정확성 우선**: 도메인 데이터(근육·관절·평가 항목)는 학명 병기 + anatomical position 순서
+4. **법적 안전**: 진단·처방·심리진단 가드레일을 시스템 프롬프트 레벨에서 차단
 
 ---
 
-## 📋 핵심 기능 (MVP)
+## 2. 문제 정의 & 도메인 이해
 
-### 1. 환자 관리
-- **등록**: 11개 필드 (이름·생년월일·성별·연락처·주소·진단명·수술이력·보험·특이사항·치료시작일·담당치료사)
-- **리스트**: 카드 형태 (이름 + 진단명 + 마지막 치료일)
-- **검색**: 이름 검색
-- **편집**: 우상단 ✏️ 버튼
-- **상태**: 활성 / 종결 / 보류
+### 진짜 문제
 
-### 2. 치료기록
-**입력 흐름**:
-1. 치료부위 선택 (다중, 위→아래 순서)
-   - 목 → 상지 → 척추/엉덩 → 무릎 → 발목 → 발가락
-   - 부위별 근육 검색·선택 (Combobox)
-2. 치료방법 선택 (다중 체크박스)
-   - 도수치료 / 전기 / 초음파 / 냉-온치료 / 과제 훈련 / 운동치료
-   - **운동치료 선택 시**:
-     - 컨셉: 근력증가 / 심폐지구력 / 근지구력 / 리커버리 / 균형-기능
-     - 운동 ➕로 여러 개 추가 가능
-     - 세트·횟수·중량은 메모로 한 번에
-     - 자주 쓰는 운동 즐겨찾기
-3. 당일 코멘트 (환자 반응·특이사항)
+물리치료 임상 현장에서 환자 1인당 **차팅에 10~20분**이 듦. 60분 진료 중 차팅이 1/3를 잡아먹는 구조. 결과:
 
-**리스트 표시**: 카드 형태 (날짜·부위·방법 / 코멘트 미리보기)
-**핵심 기능**: 이전 기록 1클릭 복사
+- 치료사가 환자 응대 대신 키보드를 봄
+- 평가 항목(VAS·ROM·MMT) 누락 잦음
+- 이전 기록 참조 어려워 동일 환자 반복 환자 작성 시 비효율
+- ICF 같은 전인적 평가 모형이 차트 안에 들어오지 못함
 
-### 3. 평가기록
-**평가 항목 (MVP)**:
-- VAS (통증 0~10) — 필수, 기본 그래프 표시
-- ROM (관절 각도) — 주요 관절만 (어깨/팔꿈치/손목/고관절/무릎/발목/허리/목)
+### 임상가가 실제 쓰는 것
+
+- VAS (통증 0~10) — 매일
+- ROM (각도) — 어깨·팔꿈치·손목·고관절·무릎·발목·허리·목
 - MMT (근력 0~5)
-- 신체 계측 (둘레·길이·부종)
-- "평가 항목 추가" 버튼 (FMS 등 확장 여지)
+- 신체계측 — 둘레·길이·부종
+- 치료방법: 도수치료 · 전기 · 초음파 · 냉온 · 과제 훈련 · 운동치료
+- 운동 컨셉: 근력증가 · 심폐지구력 · 근지구력 · 리커버리 · 균형-기능
 
-**입력 방식**: 측정 항목 토글 (그날 측정한 것만 ON)
-
-**그래프**:
-- 상단에 추이 그래프 (recharts)
-- 치료사가 표시 항목 직접 선택
-- 기본은 VAS 자동 표시
-- 항목 설정은 환자별 저장
+이 5축이 MVP의 평가·치료 입력 구조 그대로.
 
 ---
 
-## 🚫 MVP 스코프 외 (안 만드는 것)
+## 3. AI 활용 깊이 (대회 핵심 가중치)
 
-| 기능 | 미루는 이유 |
-|------|-----------|
-| 로그인/계정 | 담당 치료사는 텍스트 필드. 멀티유저는 Phase 2 |
-| 인체 그림 SVG | 구현 복잡 — 드롭다운으로 충분히 빠름 |
-| AI 요약 | Claude API. MVP 후 추가 |
-| 음성 입력 (STT) | Web Speech API. MVP 후 추가 |
-| 클라우드 동기화 | Supabase. 친구 실사용 → 다기기 필요할 때 |
-| PDF/카카오톡 공유 | 복잡도 ↑. MVP 후 |
-| 팀 공유·권한 관리 | 멀티유저 도입 후 |
-| 처방전·진단서 생성 | 의료법상 의사 면허 필요 (영구 제외) |
-| 다국어 | 한국어만 |
+### 단순 분류가 아닌 임상 추론
+
+Claude Sonnet 4.6을 호출해 환자 인풋을 WHO ICF 5도메인으로 분류 + 가설·근거·다음 단계까지 출력.
+
+**5도메인:**
+- **신체 기능** — 통증·근력·관절가동 등 신체 수준 기능
+- **활동** — 일상생활 동작(ADL) 수행 능력
+- **참여** — 사회·직업·여가 역할 복귀
+- **환경** — 가족·직장·도구·접근성 등 외부 요인
+- **개인** — 나이·성별·심리·동기·라이프스타일
+
+**출력 형식:**
+```ts
+interface IcfAnalysisResult {
+  domains: { body: string[], activity: string[], participation: string[],
+             environment: string[], personal: string[] }
+  redFlags?: string[]          // Cauda Equina·악성종양·비기계적 통증 등
+  coverage: { hasGaps: boolean, missingOrWeak: string[] }
+  followUpQuestion: string     // 다음에 물어볼 질문
+  clinicalNote: string         // 가설+근거+다음 단계 요약
+}
+```
+
+### RAG (Retrieval-Augmented Reasoning)
+
+환자 기본정보 + 최근 평가 + 최근 치료를 markdown 직렬화해 시스템 프롬프트에 자동 첨부 — [src/features/icf/domain/patient-context.ts](./src/features/icf/domain/patient-context.ts).
+
+→ AI가 "이 환자는 만성 요통 우울증 동반자" 같은 맥락을 별도 입력 없이 활용.
+
+### 가드레일 (시스템 프롬프트 레벨)
+
+- 진단 단정 금지 (`L1-XX` 같은 ICD 코드 자동 부여 안 함)
+- ICF 코드(b730, d450 등) 자동 부여 금지
+- 심리진단 단정 금지 — kinesiophobia 같은 가설 표현으로만
+- PHI 마스킹 — 환자 이름·주민번호 노출 차단
+- 자살사고 격리 라우트 — 별도 응급 안내로 빠짐
+
+### 견고함 (Sonnet 4.6 호환성 우회)
+
+- Sonnet 4.6은 **assistant message prefill 미지원** → `system prompt + balanced-brace 추출 + zod 검증` 패턴으로 우회
+- 1회 자동 재시도
+- credit / 401 / parse 실패 사용자 친화적 에러 분기
+- 서버 env 키만 사용 (BYOK 미지원, 세션 체크 후 호출)
+
+### 임상 글로서리 hover
+
+AI 출력 안 의료 용어를 모르는 임상가도 정확히 읽도록 — [src/features/icf/components/GlossaryTerm.tsx](./src/features/icf/components/GlossaryTerm.tsx).
+
+- 219줄 임상 용어 사전 — kinesiophobia, paresthesia, radiculopathy, PCS, RM, MET 등
+- hover/tap 시 정의 popover
+- 모바일 viewport 경계 충돌 자동 회피 (shiftX 계산)
 
 ---
 
-## 📱 화면 구성
+## 4. 핵심 기능
 
-### 화면 1: 환자 리스트 `/`
-- 상단: 검색창
-- 본문: 환자 카드 리스트 (이름·진단명·마지막 치료일)
-- 우하단: FAB ➕ → `/patients/new`
+### 환자 관리
 
-### 화면 2: 환자 등록/편집 `/patients/new`
-- 11개 필드 폼
-- react-hook-form + zod 검증
-- 저장 → sonner 토스트 → `/patients/[id]` 이동
+- **등록**: 13개 필드 — 이름·생년월일·성별·연락처·주소·**내원경로**·**병력**·진단명·수술이력·보험·특이사항·치료시작일·담당치료사
+- **리스트**: 카드 (이름 + 진단명 + 마지막 치료일) · 검색 · 상태 탭(치료 중/종결/전체) · 다중 선택
+- **상태**: 신규 · 재입원 · 홀드 · 종결
 
-### 화면 3: 환자 정보 `/patients/[id]`
-- 상단: 환자명 + ✏️ 편집 버튼
-- 탭 3개: [기본정보] [치료기록] [평가기록]
+### 치료기록
 
-#### 탭 A: 기본정보
-- 11개 필드 보기
+**입력 흐름:**
+1. **부위 선택** (다중, anatomical position 순서: 목 → 상지 → 척추/엉덩 → 무릎 → 발목 → 발가락)
+   - 부위별 근육 검색·선택 (Combobox, 한글+영문 학명 병기)
+2. **방법 선택** (다중): 도수·전기·초음파·냉온·과제 훈련·운동치료
+   - **운동치료 선택 시**: 컨셉 선택 → 운동 ➕ 다중 추가 → 세트·횟수·중량 메모 → 자주 쓰는 운동 즐겨찾기
+3. **플래그** (다중 토글): 컨디션·통증·복약·운동순응도 등 임상 신호
+4. **당일 코멘트**: 환자 반응·특이사항
 
-#### 탭 B: 치료기록
-- 우상단 ➕ 작성 / 📋 이전 기록 복사
-- 날짜별 카드 리스트
-- 카드 클릭 → 상세 보기
+**핵심 기능: 이전 기록 1클릭 복사** — `?copyFrom=<id>` 또는 `?copy=1`(최근 자동). 부위·방법·운동·플래그·코멘트 100% prefill. 5분 KPI의 핵심 메커니즘.
 
-#### 탭 C: 평가기록
-- 상단: 추이 그래프 (그래프 설정 ⚙️ 버튼)
-- 하단: 날짜별 평가 카드 리스트
-- 우상단 ➕ 평가 입력
+### 평가기록
 
-### 화면 4: 치료기록 작성 `/patients/[id]/treatments/new`
-- 단계별 폼 (모바일은 vaul 바텀시트 추천)
-- 1) 부위 → 2) 방법 → 3) 코멘트 → 저장
+**평가 항목 (다중 토글):**
+- VAS (통증 0~10) — 기본 그래프 자동 표시
+- ROM (관절 각도) — 주요 관절만
+- MMT (근력 0~5)
+- 신체계측 (둘레·길이·부종)
+- **Custom 평가** (확장) — FMS·Berg·보행거리·Modified Ashworth 등 자유 추가
 
-### 화면 5: 평가 입력 `/patients/[id]/evaluations/new`
-- 토글로 측정 항목 ON/OFF
-- 항목별 입력 칸
-- 저장 → 그래프 자동 갱신
+**그래프:**
+- recharts 추이 그래프
+- 치료사가 표시 항목 직접 선택, 환자별 저장 (`physiolog_graph_settings_{patientId}`)
+
+### ICF AI 분석
+
+- 자유 텍스트 또는 평가 히스토리 기반 분석 호출
+- 5도메인 카드 + red flag 박스 + 임상 추론 요약 + 다음 follow-up 질문
+- 결과는 환자별 누적 저장 (turn-based)
+
+### 임상 산출물 PDF
+
+- **환자 요약지** — 홈프로그램 + 이모지 + 이해하기 쉬운 톤
+- **의뢰서[1]~[5]** — 환자정보 · 임상평가 · 치료경과 · ICF · 서명
+- 브라우저 단독 출력 (외부 PDF 라이브러리 X, @media print CSS + Server Component prefetch)
 
 ---
 
-## 💾 데이터 모델 (TypeScript)
+## 5. 화면·라우트
 
-### Patient
+| 라우트 | 목적 |
+|---|---|
+| `/` | 환자 리스트 |
+| `/login` · `/signup` | 인증 |
+| `/patients/new` · `/patients/[id]/edit` | 등록·편집 |
+| `/patients/[id]` | 환자 정보 (탭: 기본정보 / 치료 / 검사 / 평가) |
+| `/patients/[id]/treatments/new` · `/patients/[id]/treatments/[id]/edit` | 치료 작성·편집 (1클릭 복사 지원) |
+| `/patients/[id]/evaluations/new` · `/patients/[id]/evaluations/[id]/edit` | 평가 입력·편집 |
+| `/patients/[id]/icf/new` | ICF AI 분석 |
+| `/patients/[id]/print` | A4 차트 출력 |
+| `/profile` | 사용자 프로필 |
+| `/statistics` | 통계 (Phase 1 베타) |
+| `/migration` | localStorage → Supabase 안전 이사 |
+| `/seed` | 시연용 환자 시드 |
+| `/api/icf/analyze` | Claude 호출 API |
+
+---
+
+## 6. 데이터 모델
+
+### Patient ([src/features/patients/domain/types.ts](./src/features/patients/domain/types.ts))
 ```ts
 type Patient = {
-  id: string                 // uuid
+  id: string                    // uuid
   name: string
-  birthDate: string          // ISO
-  gender: 'male' | 'female' | 'other'
+  birthDate: string             // ISO yyyy-mm-dd
+  gender: 'male' | 'female'
   phone: string
   address: string
+  referralRoute: string         // 내원(의뢰)경로
+  medicalHistory: string[]      // 병력 카테고리 다중
+  otherMedicalHistory?: string  // 기타 과거력 자유 텍스트
   diagnosis: string
   surgeryHistory?: string
-  insurance: 'health' | 'industrial' | 'auto' | 'private' | 'self'
-  notes?: string             // 특이사항/금기사항
-  treatmentStartDate: string // ISO
-  therapist: string          // 담당 치료사 이름 (텍스트)
-  status: 'active' | 'discharged' | 'on-hold'
+  insurance: 'health' | 'industrial' | 'auto' | 'private' | 'medical' | 'self'
+  notes?: string
+  treatmentStartDate: string
+  therapist: string
+  status: 'new' | 'readmit' | 'hold' | 'discharged'
   createdAt: string
   updatedAt: string
 }
 ```
 
-### Treatment
+### Treatment ([src/features/treatments/domain/types.ts](./src/features/treatments/domain/types.ts))
 ```ts
 type Treatment = {
   id: string
   patientId: string
-  date: string               // ISO
-  bodyParts: BodyPart[]      // 다중
-  methods: TreatmentMethod[] // 다중 (도수/전기/초음파/냉온/과제/운동)
-  exerciseConcept?: ExerciseConcept  // 운동치료 선택 시
-  exercises?: Exercise[]     // 운동치료 선택 시
+  date: string
+  bodyParts: BodyPart[]         // 다중
+  methods: TreatmentMethod[]    // 도수/전기/초음파/냉온/과제훈련/운동치료
+  exerciseConcept?: ExerciseConcept
+  exercises?: Exercise[]
+  flags?: TreatmentFlag[]       // 임상 신호 다중 토글
   comment?: string
   createdAt: string
 }
-
-type BodyPart = {
-  region: 'neck' | 'upperLimb' | 'spineHip' | 'knee' | 'ankle' | 'toe' | ...
-  muscles?: string[]         // 근육명
-}
-
-type Exercise = {
-  name: string
-  intensity?: string         // 메모 (세트·횟수·중량)
-}
 ```
 
-### Evaluation
+### Evaluation ([src/features/evaluations/domain/types.ts](./src/features/evaluations/domain/types.ts))
 ```ts
 type Evaluation = {
   id: string
   patientId: string
   date: string
-  vas?: number               // 0~10
+  vas?: number
   rom?: ROMRecord[]
   mmt?: MMTRecord[]
   bodyMeasurement?: BodyMeasurement[]
-  custom?: CustomEval[]      // FMS 등 확장
+  custom?: CustomEval[]         // FMS·Berg 등 확장
+  createdAt: string
+}
+```
+
+### IcfAnalysis ([src/features/icf/domain/types.ts](./src/features/icf/domain/types.ts))
+```ts
+type IcfAssessment = {
+  id: string
+  patientId: string
+  date: string
+  turns: IcfTurn[]              // 누적 turn-based
+  finalDomains: IcfDomains      // 5도메인 통합 결과
+  finalNote: string
   createdAt: string
 }
 ```
 
 ---
 
-## ✅ 비기능 요구사항
+## 7. 디자인·UX 결정
+
+### 모바일 우선
+
+- 병원에서 한손 조작 + 환자 옆에서 카트 위에 폰 두고 작성
+- 치료기록 입력은 vaul 바텀시트로 단계별
+- 토스트는 sonner — "저장됨" / "삭제됨"
+- 화면 폭 max-w-2xl 기본, 데스크톱(lg:)에서 환자 리스트 max-w-5xl 2열 그리드
+
+### shadcn Nova preset
+
+- Lucide + Geist 폰트 기본
+- 라이트 톤 파스텔 카드 색 (도메인별 빨강·파랑·초록·보라·호박)
+- framer-motion 부드러운 인터랙션
+
+### 임상 미세 디테일
+
+- 근육명에 한글 + 영문 학명 (`극상근 (Supraspinatus)`)
+- 부위 선택 순서: anatomical position (목→발가락)
+- VAS 그래프 default ON
+- AI 출력 의료 용어에 dotted underline + glossary popover
+
+---
+
+## 8. 기술 아키텍처
+
+### Stack
+
+- **프레임워크**: Next.js 16.2 (App Router · Server Components · webpack 빌드)
+- **언어**: TypeScript 엄격(`any` 금지)
+- **스타일링**: Tailwind 4 (CSS-first) · shadcn/ui Nova · framer-motion · vaul · sonner
+- **폼·검증**: react-hook-form + zod
+- **인증·DB**: Supabase Auth + Postgres (RLS) · @supabase/ssr · @supabase/supabase-js
+- **AI**: @anthropic-ai/sdk (Claude Sonnet 4.6)
+- **차트·시각화**: recharts · react-muscle-highlighter
+- **PWA**: @serwist/next
+
+### 데이터 흐름
+
+```
+[Client UI]
+   │
+   ├── localStorage 래퍼 (lib/storage/, 매직 스트링 금지)
+   │       └── Phase 1 초기 캐시 / 오프라인 폴백
+   │
+   ├── Supabase Client (@supabase/ssr)
+   │       ├── Auth (이메일·비번)
+   │       ├── Patient · Treatment · Evaluation · IcfAssessment 테이블
+   │       └── RLS — 자기 데이터만 read/write
+   │
+   └── /api/icf/analyze (Server Component)
+           ├── 세션 체크
+           ├── env에서 ANTHROPIC_API_KEY 로드 (서버 사이드만)
+           ├── patient-context.ts로 RAG 컨텍스트 markdown 직렬화
+           ├── icf-system-prompt.ts (162줄) + 환자 컨텍스트 합쳐 system message 구성
+           ├── Claude 호출 → balanced-brace 추출 → zod 검증 → 실패 시 1회 재시도
+           └── IcfAnalysisResult 반환
+```
+
+### 보안
+
+- ANTHROPIC_API_KEY 서버 env만 (BYOK 미지원)
+- Supabase RLS — 모든 테이블에 `auth.uid() = user_id` 정책
+- 세션 체크 후에만 ICF API 호출 허용
+- AuthGuard로 보호되는 페이지: `/`, `/patients/*`, `/statistics`, `/profile`
+
+---
+
+## 9. 비기능 요구사항
 
 | 항목 | 기준 |
-|------|------|
-| 환자 1인 기록 시간 | **5분 이내** (이전 기록 복사 활용 시) |
+|---|---|
+| 환자 1인 차팅 시간 | **5분 이내** (이전 기록 1클릭 복사 활용 시) |
 | 환자 리스트 로드 | 1초 이내 (50명 기준) |
-| 폼 검증 | zod 사용, 필수 필드 누락 시 저장 불가 |
-| 모바일 UX | 한손 조작, 바텀시트 입력 |
-| 오프라인 | PWA + Service Worker (병원 와이파이 불안정 대비) |
-| 데이터 보존 | localStorage (브라우저 삭제 주의 안내) |
+| ICF AI 분석 응답 | 평균 3~6초 (Sonnet 4.6 latency 기준) |
+| 폼 검증 | zod, 필수 필드 누락 시 저장 불가 |
+| 모바일 UX | 한손 조작, 바텀시트 입력, FAB ➕ |
+| 오프라인 | PWA + Service Worker (병원 와이파이 대비) |
+| 데이터 보존 | Supabase (인증 사용자별 격리) + localStorage 캐시 |
 
 ---
 
-## 🚀 작업 순서
+## 10. 의사결정 트레이드오프
 
-1. ✅ 프로젝트 셋업 (Next.js + shadcn/ui + 패키지)
-2. 타입 정의 (`features/*/domain/types.ts`)
-3. localStorage 래퍼 (`lib/storage/`)
-4. 정적 데이터 (`data/muscles.ts`, `joints.ts`, `exercises.ts`)
-5. 환자 리스트 + 등록 폼
-6. 환자 정보 페이지 + 탭
-7. 치료기록 (작성·리스트·복사)
-8. 평가기록 (입력·리스트·그래프)
-9. PWA 설정
-10. Vercel 배포 + 폰 테스트
+| 결정 | 대안 | 선택 근거 |
+|---|---|---|
+| **Supabase 단일 백엔드** | Firebase / 자체 백엔드 | RLS로 인증·인가 일원화, 마이그레이션 SQL 한 파일로 관리 |
+| **localStorage → Supabase 마이그레이션 UI** | 직접 SQL 작업 | 친구·다른 임상가가 자기 데이터 손실 없이 이사 가능 |
+| **AI는 ICF 한 영역 깊이** | 음성 입력·요약·자동 코딩 등 분산 | "한 영역에서 임상 추론까지" 차별화 / 학부 작품 흔한 기능 과적합 회피 |
+| **임상 글로서리 hover** | 별도 사전 페이지 | AI 출력 위에서 즉시 사용. 비전문가 임상가에게 학습 부담 X |
+| **PDF는 브라우저 단독** | jsPDF / 외부 PDF SaaS | @media print + Server Component prefetch로 충분. 번들 사이즈·외부 의존성 X |
+| **시드 환자 10명 고정 fixture** | random 자동생성 | 평가·시연·재현성 baseline. 진단군 9종 다양화로 ICF 분석 다각 검증 |
+| **assistant prefill 우회** | Sonnet 3.5 / Haiku로 다운그레이드 | Sonnet 4.6의 임상 추론 깊이가 필요. balanced-brace 파서로 안정화 |
 
 ---
 
-## 📚 참고
-- 친구 원본 PRD: `docs/PRD-original-v1.6.md` (22주 풀버전)
-- rom-detector 프로젝트의 ROM 측정 코드 재활용 가능
+## 11. Phase 1 완료 / Phase 2 후보
+
+### Phase 1 (완료, 인계 직전)
+
+- 환자 CRUD + 리스트 + 검색 + 상태 분류
+- 치료기록 (부위·방법·운동·플래그·코멘트·1클릭 복사)
+- 평가기록 (VAS/ROM/MMT/신체계측·Custom·그래프)
+- ICF AI 분석 (5도메인 + red flag + RAG + 글로서리)
+- PDF 출력 (요약지 + 의뢰서)
+- Supabase Auth + DB + RLS
+- localStorage → Supabase 마이그레이션 UI
+- PWA (오프라인 대응)
+- 풀 시드 10명 + 쇼케이스 환자 2명
+
+### Phase 2 후보 (실사용 피드백 기반 우선순위)
+
+| 기능 | 예상 가치 | 비고 |
+|---|---|---|
+| AI × 그래프 추이 cross-reference | 高 | VAS·ROM 추이를 AI가 인식해 ICF 진단에 반영 |
+| 모바일 PDF 가로 스크롤 fix | 中 | @media screen mobile transform scale |
+| 자동화 테스트 (Vitest + Playwright) | 中 | 평가에서 감점 사유, 인계 후 안정화 단계에 |
+| VAS 그래프 SVG PDF 임베딩 | 中 | 의뢰서에 그래프 자체 첨부 |
+| 팀 공유·권한 관리 | 中~低 | 다중 사용자 도입 후 |
+| 음성 입력 (STT) | 低 | Web Speech API. 핸즈프리 차팅 |
+| 카카오톡 공유 | 低 | 환자에게 요약지 전송 |
+
+### 영구 제외 (의료법·범위)
+
+- 처방전·진단서 생성 (의사 면허 영역)
+- 보험 청구·EDI (행정 영역)
+- 직접 진단·치료 결정 (AI 가드레일)
+
+---
+
+## 12. 개발 프로세스
+
+- **4단 문서**: `docs/specs/` (설계) · `docs/plans/` (sprint) · `docs/migrations/` (DB) · `docs/evaluations/` (평가)
+- **Sprint 단위**: sprint1 (인증·마이그) · sprint2 (ICF 완성) · sprint3 (BodyMap·VAS) · MVP 폴리시
+- **AI 심사관 사전 평가**: 9.18 / 10 (A+) 받은 후 12 commit 평가 보완 — red flag·zod·PDF·풀 시드·글로서리·데스크톱 max-width
+- **친구 인계 sanity check**: 풀 시드 → 평가 흐름 → PDF 다운로드까지 prod 검증
+
+---
+
+## 13. 코드 규칙
+
+- 파일 200줄 이내 권장
+- `any` 금지
+- 매직 스트링 금지 → `lib/storage/` 상수 사용
+- localStorage 직접 접근 금지 → 항상 래퍼 경유
+- 모든 폼은 react-hook-form + zod 검증
+- UI 변경은 Playwright 캡처 + 사용자 직접 확인 후 진행 (자세한 룰: [CLAUDE.md](./CLAUDE.md))
+
+---
+
+## 참고
+
+- **친구 원본 PRD**: `docs/PhysioLog_PRD_v1.6.docx` (22주 풀버전)
+- **AI 평가 보고서**: [docs/evaluations/2026-05-14-ai-judge-evaluation.md](./docs/evaluations/2026-05-14-ai-judge-evaluation.md)
+- **DB 마이그레이션**: [docs/migrations/2026-05-14-full-schema-idempotent.sql](./docs/migrations/2026-05-14-full-schema-idempotent.sql)
+- **프로젝트 컨벤션**: [CLAUDE.md](./CLAUDE.md) · [AGENTS.md](./AGENTS.md)
