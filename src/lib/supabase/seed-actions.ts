@@ -6,8 +6,8 @@ import type { PatientInput } from '@/features/patients/domain/types'
 import type { TreatmentInput } from '@/features/treatments/domain/types'
 import type { EvaluationInput } from '@/features/evaluations/domain/types'
 import type { IcfAssessment } from '@/features/icf/domain/types'
-import { SHOWCASE_BUNDLES } from '@/data/showcase-patients'
-import { RICH_SEED_BUNDLES } from '@/data/seed-patients/rich-patients'
+import { SHOWCASE_BUNDLES } from '@/data/seeds/showcase'
+import { RICH_SEED_BUNDLES } from '@/data/seeds/rich/rich-patients'
 
 /**
  * 시연용 시드 액션 — 현재 사용자 데이터 청소 + 풍부한 fixture 생성.
