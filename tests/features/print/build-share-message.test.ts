@@ -61,6 +61,65 @@ describe('buildShareMessage', () => {
     expect(msg).toContain('baseline-test 물리치료사 (physiolog)')
   })
 
+  it('운동에 세트·횟수·중량·시간 강도 정보 포함', () => {
+    const treatments: Treatment[] = [
+      {
+        id: 't1',
+        patientId: 'p',
+        date: '2026-05-13',
+        bodyParts: [],
+        methods: [],
+        exercises: [
+          { id: 'x1', name: 'Eccentric loading', sets: 3, reps: 12, weight: 2 },
+          { id: 'x2', name: '플랭크', sets: 3, duration: 1 },
+          { id: 'x3', name: 'name only' }, // 강도 없음 → 이름만
+        ],
+        createdAt: '',
+      },
+    ]
+    const msg = buildShareMessage({ patient: mkPatient(), treatments, evaluations: [] })
+    expect(msg).toContain('Eccentric loading — 3세트, 12회, 2kg')
+    expect(msg).toContain('플랭크 — 3세트, 1분')
+    expect(msg).toContain('• name only')
+  })
+
+  it('homework가 운동 섹션 마지막 항목으로 통합 (별도 📝 섹션 X)', () => {
+    const treatments: Treatment[] = [
+      {
+        id: 't1',
+        patientId: 'p',
+        date: '2026-05-13',
+        bodyParts: [],
+        methods: [],
+        exercises: [{ id: 'x1', name: 'Squat', sets: 3, reps: 10 }],
+        homework: '15분마다 휴식·자세 점검',
+        createdAt: '',
+      },
+    ]
+    const msg = buildShareMessage({ patient: mkPatient(), treatments, evaluations: [] })
+    expect(msg).toContain('🏠 집에서 하실 운동·관리')
+    expect(msg).toContain('• Squat — 3세트, 10회')
+    expect(msg).toContain('• 15분마다 휴식·자세 점검')
+    expect(msg).not.toContain('📝 숙제')
+  })
+
+  it('운동 없이 homework만 있어도 운동 섹션으로 표시', () => {
+    const treatments: Treatment[] = [
+      {
+        id: 't1',
+        patientId: 'p',
+        date: '2026-05-13',
+        bodyParts: [],
+        methods: [],
+        homework: '온찜질 하루 2회',
+        createdAt: '',
+      },
+    ]
+    const msg = buildShareMessage({ patient: mkPatient(), treatments, evaluations: [] })
+    expect(msg).toContain('🏠 집에서 하실 운동·관리')
+    expect(msg).toContain('• 온찜질 하루 2회')
+  })
+
   it('평가·치료 데이터 없으면 해당 섹션 생략', () => {
     const msg = buildShareMessage({
       patient: mkPatient({ name: '홍길동', notes: undefined }),

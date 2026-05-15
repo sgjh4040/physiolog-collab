@@ -60,23 +60,36 @@ export function buildShareMessage({
     }
   }
 
-  // 최근 치료의 숙제·운동
+  // 최근 치료의 운동·숙제 — PDF 요약지(SummaryPrintTemplate)와 동일한 직렬화로
+  // 환자가 카톡으로 받았을 때도 세트·횟수·중량을 그대로 따라할 수 있게 박제.
+  // homework는 별도 섹션이 아니라 운동 섹션 마지막 항목으로 통합 (PDF와 동일).
   const latestTreatment = treatments[0]
   if (latestTreatment) {
+    const items: string[] = []
     if (latestTreatment.exercises && latestTreatment.exercises.length > 0) {
-      lines.push('🏠 집에서 하실 운동')
-      const names = latestTreatment.exercises
+      const expanded = latestTreatment.exercises
         .slice(0, 5)
-        .map((e) => e.name?.trim())
-        .filter(Boolean)
-      for (const name of names) {
-        lines.push(`• ${name}`)
-      }
-      lines.push('')
+        .map((e) => {
+          const name = e.name?.trim()
+          if (!name) return null
+          const parts: string[] = []
+          if (e.sets) parts.push(`${e.sets}세트`)
+          if (e.reps) parts.push(`${e.reps}회`)
+          if (e.weight) parts.push(`${e.weight}kg`)
+          if (e.duration) parts.push(`${e.duration}분`)
+          return parts.length > 0 ? `${name} — ${parts.join(', ')}` : name
+        })
+        .filter((x): x is string => x !== null)
+      items.push(...expanded)
     }
     if (latestTreatment.homework) {
-      lines.push('📝 숙제')
-      lines.push(latestTreatment.homework)
+      items.push(latestTreatment.homework)
+    }
+    if (items.length > 0) {
+      lines.push('🏠 집에서 하실 운동·관리')
+      for (const item of items) {
+        lines.push(`• ${item}`)
+      }
       lines.push('')
     }
   }
