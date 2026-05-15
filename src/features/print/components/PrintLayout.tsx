@@ -3,12 +3,13 @@
 import Link from 'next/link'
 import { ArrowLeft, Printer } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ShareButton } from './ShareButton'
 
 /**
  * Print-aware A4 wrapper.
  *
  * - 화면에서는 회색 배경에 A4 비율 흰 종이가 떠있는 모양 (미리보기처럼)
- * - 상단 toolbar에 [뒤로] + [PDF 저장] 버튼 — `@media print`로 인쇄 시 숨김
+ * - 상단 toolbar에 [뒤로] + [공유?] + [PDF 저장] — `@media print`로 인쇄 시 숨김
  * - 인쇄 시에는 children만 A4 페이지로 렌더링 (벡터 PDF로 변환됨)
  *
  * children 안에서 `.print-page` 클래스로 페이지 분할,
@@ -19,9 +20,20 @@ type Props = {
   patientName: string
   documentTitle: string
   children: React.ReactNode
+  /**
+   * 환자에게 카카오톡·문자로 보낼 메시지. 있으면 toolbar에 [공유] 버튼 노출.
+   * 환자용 요약지(summary) 타입에서만 전달, 의뢰서(referral)에선 undefined.
+   */
+  shareMessage?: string
 }
 
-export function PrintLayout({ patientId, patientName, documentTitle, children }: Props) {
+export function PrintLayout({
+  patientId,
+  patientName,
+  documentTitle,
+  children,
+  shareMessage,
+}: Props) {
   return (
     <div className="min-h-screen bg-muted/40">
       {/* 인쇄 시 자동 적용되는 페이지 메타 — page size, 여백, 색상 강제 표시 */}
@@ -109,14 +121,19 @@ export function PrintLayout({ patientId, patientName, documentTitle, children }:
             {documentTitle}
           </div>
 
-          <Button
-            size="sm"
-            onClick={() => window.print()}
-            className="gap-1.5 shadow-sm"
-          >
-            <Printer className="h-4 w-4" />
-            PDF 저장
-          </Button>
+          <div className="flex items-center gap-1.5">
+            {shareMessage && (
+              <ShareButton title={`${patientName}님 운동 안내`} message={shareMessage} />
+            )}
+            <Button
+              size="sm"
+              onClick={() => window.print()}
+              className="gap-1.5 shadow-sm"
+            >
+              <Printer className="h-4 w-4" />
+              PDF 저장
+            </Button>
+          </div>
         </div>
         <p className="no-print mx-auto max-w-3xl px-4 pb-2 text-center text-[11px] text-muted-foreground">
           인쇄 다이얼로그에서 <strong>“PDF로 저장”</strong>을 선택하면 파일로 받을 수 있습니다.

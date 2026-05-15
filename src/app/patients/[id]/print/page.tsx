@@ -7,6 +7,7 @@ import { getProfile } from '@/lib/supabase/actions'
 import { PrintLayout } from '@/features/print/components/PrintLayout'
 import { SummaryPrintTemplate } from '@/features/print/components/SummaryPrintTemplate'
 import { ReferralPrintTemplate } from '@/features/print/components/ReferralPrintTemplate'
+import { buildShareMessage } from '@/features/print/utils/build-share-message'
 
 type PageProps = {
   params: Promise<{ id: string }>
@@ -51,11 +52,18 @@ export default async function PrintPage({ params, searchParams }: PageProps) {
   const authorName = profile?.name || profile?.email?.split('@')[0]
   const generatedAt = new Date().toISOString()
 
+  // 환자용 요약지일 때만 카카오톡 공유 메시지 빌드 (의뢰서는 의료진용이라 제외)
+  const shareMessage =
+    type === 'summary'
+      ? buildShareMessage({ patient, treatments, evaluations, authorName })
+      : undefined
+
   return (
     <PrintLayout
       patientId={id}
       patientName={patient.name}
       documentTitle={TITLES[type]}
+      shareMessage={shareMessage}
     >
       {type === 'summary' ? (
         <SummaryPrintTemplate
