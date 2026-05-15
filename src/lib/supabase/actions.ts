@@ -59,6 +59,8 @@ export async function loginWithKakao() {
     provider: 'kakao',
     options: {
       redirectTo: `${origin}/auth/callback`,
+      // Supabase 기본 scope: account_email + profile_image + profile_nickname
+      // 비즈 앱 전환 + 동의항목 설정 완료된 상태라 모두 동의 가능
     },
   })
 
