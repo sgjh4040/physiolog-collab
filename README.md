@@ -22,6 +22,8 @@ WHO **ICF**(International Classification of Functioning) 통합이 단순 분류
 - **임상 글로서리 hover** — AI 출력 안 의료 용어(kinesiophobia·paresthesia·radiculopathy 등)에 hover/tap 시 정의 즉시 팝업. 모바일에서 viewport 경계 충돌 자동 회피
 - **임상 산출물 PDF** — 환자 요약지(홈프로그램) + 의뢰서[1]~[5](정보·평가·경과·ICF·서명). 브라우저 단독 출력, 외부 PDF 라이브러리 없음
 - **이전 기록 1클릭 복사** — 같은 환자 반복 치료 시 부위·방법·운동·플래그·코멘트 모두 prefill. 5분 KPI의 핵심 메커니즘
+- **카카오 OAuth 로그인** — 이메일·비번 가입 + 카카오 OAuth 병행. Supabase `signInWithOAuth` + `/auth/callback` 흐름. 한국 사용자에게 가장 친근한 인증 경로 — 친구·임상 동료 인계가 카카오 한 번 누르기로 끝
+- **환자 카톡 공유** — 환자 요약지 핵심(운동 강도 + homework + 주의사항)을 친근체 메시지로 자동 빌드. Web Share API + 클립보드 폴백. 폰에서 카톡으로 즉시 전송
 
 ---
 
@@ -54,12 +56,13 @@ WHO **ICF**(International Classification of Functioning) 통합이 단순 분류
 
 | 라우트 | 화면 | 비고 |
 |---|---|---|
+| `/login` · `/signup` | 인증 | 이메일·비번 + **카카오 OAuth** 병행. `/auth/callback` 공통 핸들러 |
 | `/` | 환자 리스트 | 이름·진단명 검색, 상태 탭(치료 중/종결/전체), 다중 선택, FAB 등록 |
 | `/patients/[id]` | 환자 정보 | 탭: 기본정보 / 치료 / 검사 / 평가 |
 | `/patients/[id]/treatments/new` | 치료 작성 | 부위→방법→운동→코멘트. `?copyFrom=` 또는 `?copy=1`로 1클릭 복사 |
 | `/patients/[id]/evaluations/new` | 평가 입력 | VAS/ROM/MMT/신체계측 토글, 그래프 항목 환자별 저장 |
 | `/patients/[id]/icf/new` | ICF AI 분석 | Claude 호출, 5도메인 카드 + 임상 추론 요약 + red flag |
-| `/patients/[id]/print` | 차트 출력 | A4 환자 요약지·의뢰서 |
+| `/patients/[id]/print` | 차트 출력 | A4 환자 요약지·의뢰서 + 카톡 공유 |
 | `/seed` | 시연 시드 | [청소] [풀 시드 10명] [쇼케이스 환자 2명] 3카드 |
 | `/migration` | 데이터 이사 | localStorage → Supabase 안전 마이그레이션 |
 
@@ -70,7 +73,7 @@ WHO **ICF**(International Classification of Functioning) 통합이 단순 분류
 - **프레임워크**: Next.js 16.2 (App Router · Server Components) + React 19.2 + TypeScript
 - **스타일링**: Tailwind CSS 4 (CSS-first) · shadcn/ui Nova preset · framer-motion · vaul(모바일 바텀시트) · sonner
 - **폼·검증**: react-hook-form + zod
-- **인증·DB**: Supabase Auth + Postgres (RLS) · @supabase/ssr · @supabase/supabase-js
+- **인증·DB**: Supabase Auth (이메일·비번 + **카카오 OAuth**) + Postgres (RLS) · @supabase/ssr · @supabase/supabase-js
 - **AI**: @anthropic-ai/sdk (Claude Sonnet 4.6)
 - **차트·시각화**: recharts · react-muscle-highlighter
 - **PWA**: @serwist/next (오프라인 대응 — 병원 와이파이 불안정 대비)

@@ -293,7 +293,8 @@ type IcfAssessment = {
    │       └── Phase 1 초기 캐시 / 오프라인 폴백
    │
    ├── Supabase Client (@supabase/ssr)
-   │       ├── Auth (이메일·비번)
+   │       ├── Auth (이메일·비번 + 카카오 OAuth via signInWithOAuth)
+   │       ├── /auth/callback — exchangeCodeForSession 후 세션 발급
    │       ├── Patient · Treatment · Evaluation · IcfAssessment 테이블
    │       └── RLS — 자기 데이터만 read/write
    │
@@ -312,6 +313,8 @@ type IcfAssessment = {
 - Supabase RLS — 모든 테이블에 `auth.uid() = user_id` 정책
 - 세션 체크 후에만 ICF API 호출 허용
 - AuthGuard로 보호되는 페이지: `/`, `/patients/*`, `/statistics`, `/profile`
+- OAuth 흐름 — 카카오 Client Secret은 Supabase Dashboard에만 저장(클라이언트 노출 X), `/auth/callback`에서 code↔session 교환 후 httpOnly 쿠키
+- OAuth 자동 identity linking 비활성 (Supabase 기본) — 같은 이메일도 별개 user 인식, identity 탈취 방지
 
 ---
 
@@ -340,6 +343,9 @@ type IcfAssessment = {
 | **PDF는 브라우저 단독** | jsPDF / 외부 PDF SaaS | @media print + Server Component prefetch로 충분. 번들 사이즈·외부 의존성 X |
 | **시드 환자 10명 고정 fixture** | random 자동생성 | 평가·시연·재현성 baseline. 진단군 9종 다양화로 ICF 분석 다각 검증 |
 | **assistant prefill 우회** | Sonnet 3.5 / Haiku로 다운그레이드 | Sonnet 4.6의 임상 추론 깊이가 필요. balanced-brace 파서로 안정화 |
+| **카카오 OAuth + 이메일 병행** | 카카오 단일 / 이메일 단일 | 친구·일반 사용자 양쪽 친근. 한국 사용자 대다수 카카오 친근, 일부는 이메일 선호. 별개 user 분리는 Supabase 기본(자동 linking은 보안 위험) |
+| **비즈 앱 전환 (개인 개발자 본인인증)** | 사업자번호 받기 / 카카오 로그인 포기 | 카카오 개인 개발자는 `account_email` "권한 없음"이라 KOE205. 본인인증·약관 동의만으로 비즈 앱 전환 가능 → 사업자번호 없이 이메일 동의 활성화 |
+| **시계열 컨텍스트 N=8 단순 cut** | 전체 / N=5 / intelligent 샘플링(first+mid+latest) | 8주분 추세 충분 + 만성 환자도 토큰 무리 없음. intelligent 샘플링은 over-engineering |
 
 ---
 
@@ -350,24 +356,28 @@ type IcfAssessment = {
 - 환자 CRUD + 리스트 + 검색 + 상태 분류
 - 치료기록 (부위·방법·운동·플래그·코멘트·1클릭 복사)
 - 평가기록 (VAS/ROM/MMT/신체계측·Custom·그래프)
-- ICF AI 분석 (5도메인 + red flag + RAG + 글로서리)
-- PDF 출력 (요약지 + 의뢰서)
-- Supabase Auth + DB + RLS
+- ICF AI 분석 (5도메인 + red flag + RAG + **시계열 추이 cross-reference** + 글로서리)
+- PDF 출력 (요약지 + 의뢰서 + **VAS SVG 그래프 임베딩**)
+- Supabase Auth (이메일·비번 + **카카오 OAuth** 병행) + DB + RLS
 - localStorage → Supabase 마이그레이션 UI
+- 환자 **카카오톡 공유** (Web Share API + 클립보드 폴백, 운동 강도·homework 통합)
+- 모바일 PDF 가로 스크롤 fix
 - PWA (오프라인 대응)
 - 풀 시드 10명 + 쇼케이스 환자 2명
+- **Vitest 단위 테스트 60+ 건** (도메인 함수·storage·ICF schema·시계열 추출·공유 메시지)
 
 ### Phase 2 후보 (실사용 피드백 기반 우선순위)
 
 | 기능 | 예상 가치 | 비고 |
 |---|---|---|
-| AI × 그래프 추이 cross-reference | 高 | VAS·ROM 추이를 AI가 인식해 ICF 진단에 반영 |
-| 모바일 PDF 가로 스크롤 fix | 中 | @media screen mobile transform scale |
-| 자동화 테스트 (Vitest + Playwright) | 中 | 평가에서 감점 사유, 인계 후 안정화 단계에 |
-| VAS 그래프 SVG PDF 임베딩 | 中 | 의뢰서에 그래프 자체 첨부 |
+| 음성 입력 (STT) | 高 | Web Speech API. 핸즈프리 차팅 — 5분 KPI 직격 |
+| Kakao SDK 카드 메시지 | 中 | 썸네일+버튼 카드 카톡. 비즈 앱 전환 완료라 즉시 가능 |
+| 카카오 닉네임 자동 fallback | 中 | 카카오 가입자 profile.name 자동 표시 |
+| OAuth identity 수동 linking | 中 | 같은 이메일 이중 가입 시 데이터 통합 |
+| 공개 share URL + 만료 토큰 | 中 | PDF 직접 첨부 카톡. 보안 검토 필수 |
+| E2E Playwright 자동화 | 中 | Vitest 단위만 깔림. UI 컴포넌트 + flow 테스트 |
 | 팀 공유·권한 관리 | 中~低 | 다중 사용자 도입 후 |
-| 음성 입력 (STT) | 低 | Web Speech API. 핸즈프리 차팅 |
-| 카카오톡 공유 | 低 | 환자에게 요약지 전송 |
+| PWA Service Worker update 알림 | 低 | 친구가 prod 갱신 인지 |
 
 ### 영구 제외 (의료법·범위)
 
