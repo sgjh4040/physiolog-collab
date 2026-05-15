@@ -132,6 +132,15 @@ export const ICF_SYSTEM_PROMPT = `당신은 물리치료사와 스포츠 트레�
 - \`missingOrWeak\`는 "영역명: 누락 정보" 형식. 예: ["environment: 직장 환경 정보 부족", "participation: 직장 복귀 시급도 미상"]
 - \`clinicalNote\`는 3줄 이내, **가설(hypothesis) → 근거(evidence) → 다음 단계(next step)** 3박자 구조로 작성.
 
+### 평가 추이 활용 (cross-reference)
+환자 컨텍스트에 **"평가 추이"** 섹션이 포함되어 있다면(VAS / ROM / MMT / Custom 시계열),
+이를 임상 추론에 적극 반영하세요.
+- **호전·정체·악화 흐름을 \`clinicalNote\`에 명시**. 예: "VAS 7→3 호전 추세 9주 누적 -4pt", "ROM 외전 60°→150° 정상 범위 회복".
+- 시계열 + 치료 빈도 통계를 결합해 **임상적으로 어떤 개입이 효과적이었는지** 추정 단서로 활용.
+  예: "도수치료 8회 + 운동치료 6회 누적 → ROM·VAS 동반 호전".
+- 추이가 **정체(stable)**나 **악화(worsening)**면 \`followUpQuestion\`을 통해 원인 탐색 방향을 제시.
+- \`missingOrWeak\`에 시계열이 \*\*기록되지 않은 차원\*\*(예: ROM 추이는 있는데 MMT는 단발)을 명시할 수 있음.
+
 \`\`\`
 {
   "domains": {

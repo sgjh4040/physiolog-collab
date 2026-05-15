@@ -177,7 +177,7 @@ export function IcfAssessmentForm({ patientId }: Props) {
             <div>
               <span className="font-semibold">환자 컨텍스트 자동 참고</span>
               <span className="ml-1 text-blue-700/90">
-                — 이 환자의 기본정보 · 최근 평가 1건 · 최근 치료 1건을 AI에게 자동 전달합니다. 새로 관찰한 내용 위주로 입력하세요.
+                — 이 환자의 기본정보 · 최근 평가 8건 시계열·추세(VAS·ROM·MMT·Custom) · 최근 치료 8건 빈도를 AI에게 자동 전달합니다. 새로 관찰한 내용 위주로 입력하세요.
               </span>
             </div>
           </div>
