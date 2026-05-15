@@ -76,6 +76,79 @@ function lookupMovementLabel(jointId: string): string {
   return jointId
 }
 
+/**
+ * VAS 추이 인라인 SVG 차트.
+ * Server Component 환경에서 recharts 같은 클라이언트 라이브러리 사용 불가 →
+ * 인라인 SVG로 직접 그려 PDF 인쇄 시 벡터로 임베딩됨.
+ */
+function VasTrendChart({ entries }: { entries: { date: string; vas: number }[] }) {
+  if (entries.length < 2) return null
+  const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date))
+  const w = 480
+  const h = 130
+  const padL = 28
+  const padR = 8
+  const padT = 8
+  const padB = 26
+  const innerW = w - padL - padR
+  const innerH = h - padT - padB
+  const minDate = new Date(sorted[0].date).getTime()
+  const maxDate = new Date(sorted[sorted.length - 1].date).getTime()
+  const dateSpan = maxDate - minDate || 1
+  const points = sorted.map((e) => {
+    const t = (new Date(e.date).getTime() - minDate) / dateSpan
+    return {
+      x: padL + t * innerW,
+      y: padT + (1 - e.vas / 10) * innerH,
+      vas: e.vas,
+      date: e.date,
+    }
+  })
+  const linePath = points
+    .map((p, i) => (i === 0 ? `M ${p.x.toFixed(1)} ${p.y.toFixed(1)}` : `L ${p.x.toFixed(1)} ${p.y.toFixed(1)}`))
+    .join(' ')
+  const yTicks = [0, 2, 4, 6, 8, 10]
+
+  return (
+    <svg
+      viewBox={`0 0 ${w} ${h}`}
+      preserveAspectRatio="xMidYMid meet"
+      role="img"
+      aria-label="VAS 통증 추이 그래프"
+      xmlns="http://www.w3.org/2000/svg"
+      className="my-1 block w-full"
+    >
+      {yTicks.map((v) => {
+        const y = padT + (1 - v / 10) * innerH
+        return (
+          <g key={v}>
+            <line x1={padL} x2={w - padR} y1={y} y2={y} stroke="#e5e7eb" strokeWidth="0.5" />
+            <text x={padL - 4} y={y + 3} fontSize="8" fill="#6b7280" textAnchor="end">{v}</text>
+          </g>
+        )
+      })}
+      <line x1={padL} x2={padL} y1={padT} y2={padT + innerH} stroke="#94a3b8" strokeWidth="0.6" />
+      <line x1={padL} x2={w - padR} y1={padT + innerH} y2={padT + innerH} stroke="#94a3b8" strokeWidth="0.6" />
+      <text x={padL} y={h - 6} fontSize="8" fill="#6b7280">{sorted[0].date.slice(5).replace('-', '/')}</text>
+      <text x={w - padR} y={h - 6} fontSize="8" fill="#6b7280" textAnchor="end">
+        {sorted[sorted.length - 1].date.slice(5).replace('-', '/')}
+      </text>
+      <text x={padL - 22} y={padT + innerH / 2} fontSize="8" fill="#475569" transform={`rotate(-90 ${padL - 22} ${padT + innerH / 2})`} textAnchor="middle">
+        VAS
+      </text>
+      <path d={linePath} fill="none" stroke="#dc2626" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
+      {points.map((p, i) => (
+        <g key={i}>
+          <circle cx={p.x} cy={p.y} r="2.5" fill="#dc2626" />
+          <text x={p.x} y={p.y - 5} fontSize="7.5" fill="#dc2626" textAnchor="middle" fontWeight="600">
+            {p.vas}
+          </text>
+        </g>
+      ))}
+    </svg>
+  )
+}
+
 export function ReferralPrintTemplate({
   patient,
   treatments,
@@ -272,6 +345,12 @@ export function ReferralPrintTemplate({
             </li>
           )}
         </ul>
+        {vasEntries.length >= 2 && (
+          <div className="mt-2">
+            <p className="mb-0.5 text-[9pt] font-semibold text-slate-600">VAS 통증 추이</p>
+            <VasTrendChart entries={vasEntries.map((e) => ({ date: e.date, vas: e.vas as number }))} />
+          </div>
+        )}
       </section>
 
       {/* [4] ICF 임상 추론 */}

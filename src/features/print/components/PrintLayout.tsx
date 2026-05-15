@@ -67,6 +67,29 @@ export function PrintLayout({ patientId, patientName, documentTitle, children }:
             line-height: 1.6;
           }
         }
+        /*
+         * 모바일에서는 A4 종이(210mm ≈ 794px)가 viewport보다 커서
+         * 가로 스크롤 발생. transform: scale은 layout box를 안 줄여서
+         * 잘림 문제 남음 → A4 고정폭을 풀고 viewport 폭에 맞춰 흐름.
+         * 인쇄 시(@media print 별도)에는 영향 없음 — A4 PDF 그대로.
+         */
+        @media screen and (max-width: 500px) {
+          .print-page-wrapper {
+            overflow-x: hidden;
+          }
+          .print-page {
+            width: auto;
+            max-width: calc(100vw - 16px);
+            min-height: auto;
+            margin: 12px 8px;
+            padding: 10mm 8mm;
+            font-size: 9.5pt;
+            line-height: 1.5;
+          }
+          .print-page table {
+            font-size: 9pt;
+          }
+        }
       `}</style>
 
       {/* 화면 전용 toolbar */}
@@ -101,7 +124,7 @@ export function PrintLayout({ patientId, patientName, documentTitle, children }:
       </div>
 
       {/* 인쇄될 내용 */}
-      <div className="mx-auto pb-12">
+      <div className="mx-auto pb-12 print-page-wrapper">
         {children}
       </div>
     </div>
