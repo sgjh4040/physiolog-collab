@@ -147,7 +147,7 @@ src/
 
 - **현재 PRD**: [PRD.md](./PRD.md)
 - **AI 평가 보고서**: [docs/evaluations/2026-05-14-ai-judge-evaluation.md](./docs/evaluations/2026-05-14-ai-judge-evaluation.md)
-- **DB 마이그레이션**: [docs/migrations/2026-05-14-full-schema-idempotent.sql](./docs/migrations/2026-05-14-full-schema-idempotent.sql)
+- **DB 마이그레이션**: [docs/migrations/schema.sql](./docs/migrations/schema.sql) — 통합 멱등 스키마(여러 번 실행해도 안전)
 - **Sprint 설계·계획**: `docs/specs/` · `docs/plans/`
 - **친구 원본 PRD**: `docs/PhysioLog_PRD_v1.6.docx` (22주 풀버전)
 - **프로젝트 컨벤션·UI 작업 규칙**: [CLAUDE.md](./CLAUDE.md) · [AGENTS.md](./AGENTS.md)

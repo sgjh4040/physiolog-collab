@@ -14,7 +14,7 @@ import { RICH_SEED_BUNDLES } from '@/data/seeds/rich/rich-patients'
  *
  * - 현재 로그인 사용자의 환자만 영향 (RLS로 다른 사용자 데이터는 보호)
  * - patients 삭제 시 FK ON DELETE CASCADE로 treatments/evaluations/icf_assessments 자동 삭제
- *   (full-schema-idempotent.sql의 외래키 정의 그대로)
+ *   (docs/migrations/schema.sql의 외래키 정의 그대로)
  */
 
 type ActionResult = { success: boolean; error?: string; count?: number }
