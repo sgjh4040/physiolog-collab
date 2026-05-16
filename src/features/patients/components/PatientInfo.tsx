@@ -38,6 +38,12 @@ export function PatientInfo({ patient }: Props) {
       <Field label="담당 치료사" value={patient.therapist} />
       <Field label="상태" value={PATIENT_STATUS_LABEL[patient.status]} />
       <Field
+        label="과거력/기저질환"
+        value={formatMedicalHistory(patient.medicalHistory, patient.otherMedicalHistory)}
+        full
+        multiline
+      />
+      <Field
         label="특이사항/금기사항"
         value={patient.notes || '-'}
         full
@@ -45,6 +51,15 @@ export function PatientInfo({ patient }: Props) {
       />
     </dl>
   )
+}
+
+function formatMedicalHistory(
+  list: string[] | undefined,
+  other: string | undefined,
+): string {
+  const items = [...(list ?? [])]
+  if (other && other.trim()) items.push(other.trim())
+  return items.length > 0 ? items.join(', ') : '-'
 }
 
 function Field({

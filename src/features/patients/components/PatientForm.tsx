@@ -242,6 +242,20 @@ export function PatientForm({
                     </div>
                   ))}
                 </div>
+                {/* 옵션에 없는 옛 값 보존 — 시드 마이그레이션이나 옵션 변경 후
+                    silent 손실 방지. 사용자가 인지하고 필요하면 옵션 외 값을
+                    유지 또는 제거할 수 있도록 readonly로 노출. */}
+                {(() => {
+                  const known = new Set(MEDICAL_HISTORY_OPTIONS)
+                  const extras = (field.value ?? []).filter((v) => !known.has(v))
+                  if (extras.length === 0) return null
+                  return (
+                    <div className="rounded-md border border-dashed border-amber-300 bg-amber-50/50 px-3 py-2 text-xs text-amber-900">
+                      <span className="font-medium">기존 기록: </span>
+                      {extras.join(', ')}
+                    </div>
+                  )
+                })()}
                 <FormMessage />
               </FormItem>
             )}
