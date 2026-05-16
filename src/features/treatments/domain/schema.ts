@@ -43,10 +43,12 @@ export const exerciseSchema = z.object({
   duration: z.coerce.number().min(0).optional(),  // 분 단위
 })
 
+// side는 cervical/thoracic/lumbar 같은 중앙 부위에서 의미가 약해 optional.
+// muscles는 입력 안 한 경우 빈 배열로 안전하게 처리.
 export const bodyPartSchema = z.object({
   region: bodyRegionEnum,
-  side: sideEnum,
-  muscles: z.array(z.string()),
+  side: sideEnum.optional(),
+  muscles: z.array(z.string()).default([]),
 })
 
 export const treatmentFormSchema = z
