@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Loader2, Sparkles, MessageSquare, Save, RefreshCw, Info, AlertTriangle } from 'lucide-react'
@@ -11,8 +11,6 @@ import { Badge } from '@/components/ui/badge'
 import { IcfDomainCard } from './IcfDomainCard'
 import { GlossaryText } from './GlossaryText'
 import { createIcfAssessment } from '@/lib/supabase/icf'
-import { getPatient } from '@/lib/supabase/patients'
-import { getEvaluations } from '@/lib/supabase/evaluations'
 import { mergeDomains, mergeRedFlags, DOMAIN_KEYS, type IcfTurn, type IcfAnalysisResult } from '@/features/icf/domain/types'
 import type { Patient } from '@/features/patients/domain/types'
 import type { Evaluation } from '@/features/evaluations/domain/types'
@@ -24,6 +22,9 @@ interface ApiMessage {
 
 interface Props {
   patientId: string
+  // SSR prefetch로 받은 환자·시계열 평가. useEffect 폴백 제거로 이중 로딩 해소.
+  initialPatient: Patient
+  initialEvaluations: Evaluation[]
 }
 
 const TAG_CATEGORIES = [
@@ -51,7 +52,11 @@ const TAG_CATEGORIES = [
 
 type Status = 'idle' | 'loading' | 'result'
 
-export function IcfAssessmentForm({ patientId }: Props) {
+export function IcfAssessmentForm({
+  patientId,
+  initialPatient,
+  initialEvaluations,
+}: Props) {
   const router = useRouter()
   const [status, setStatus] = useState<Status>('idle')
   const [input, setInput] = useState('')
@@ -59,19 +64,9 @@ export function IcfAssessmentForm({ patientId }: Props) {
   const [turns, setTurns] = useState<IcfTurn[]>([])
   const [history, setHistory] = useState<ApiMessage[]>([])
   const [currentResult, setCurrentResult] = useState<IcfAnalysisResult | null>(null)
-  const [patient, setPatient] = useState<Patient | null>(null)
-  const [evaluations, setEvaluations] = useState<Evaluation[]>([])
-  useEffect(() => {
-    async function loadData() {
-      const p = await getPatient(patientId)
-      const evs = await getEvaluations(patientId)
-      if (p) {
-        setPatient(p)
-        setEvaluations(evs)
-      }
-    }
-    loadData()
-  }, [patientId])
+  // SSR prefetch라 mount 시점에 이미 데이터가 있음. 별도 fetch·로딩 표시 불필요.
+  const patient: Patient | null = initialPatient
+  const evaluations: Evaluation[] = initialEvaluations
 
   const latestDomains = turns.length > 0 ? mergeDomains(turns) : null
   const allRedFlags = turns.length > 0 ? mergeRedFlags(turns) : []
