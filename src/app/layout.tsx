@@ -29,6 +29,9 @@ export const metadata: Metadata = {
     title: "physiolog",
     statusBarStyle: "black-translucent",
     startupImage: [
+      // 매칭 실패 시 fallback (media 없으면 iOS가 default로 사용). 큰 거 한 장이라
+      // iPhone 모델별 dimension 누락(예: 11/XR, 12 Pro Max, 14 Plus)에도 splash 노출 보장.
+      { url: "/splash/apple-splash-1290x2796.png" },
       {
         url: "/splash/apple-splash-1290x2796.png",
         media:

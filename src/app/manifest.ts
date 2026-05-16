@@ -12,6 +12,14 @@ export default function manifest(): MetadataRoute.Manifest {
     background_color: "#1c1c1c",
     theme_color: "#1c1c1c",
     icons: [
+      // 'any' — iOS는 maskable만 있으면 사용하지 않음. 일반 purpose도 추가해야
+      // 홈 화면 아이콘·splash 합성에 사용됨.
+      {
+        src: "/icon",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "any",
+      },
       {
         src: "/icon",
         sizes: "512x512",
