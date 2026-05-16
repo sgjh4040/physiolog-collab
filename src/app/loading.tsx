@@ -1,17 +1,15 @@
-import { LoadingScreen } from '@/components/loading-screen'
+import { PatientListSkeleton } from '@/features/patients/components/PatientListSkeleton'
 
 /**
- * Root-level Suspense fallback.
+ * Root-level Suspense fallback — 환자 리스트(/)로 navigation 시 자동 표시.
  *
- * Server Component 페이지로 navigation할 때 (뒤로가기 포함) 서버 응답이
- * 도착하기 전까지 자동으로 표시됨. 'app/<route>/loading.tsx'가 더 specific하면
- * 그 파일이 우선 적용. 없으면 이 root loading이 fallback.
+ * 이전엔 LoadingScreen(중앙 splash 텍스트)였지만 사용자가 "흰 화면" 직후 보는
+ * 화면이 실제 컨텐츠와 다른 구조면 인지 부조화 발생. 환자 리스트 페이지의
+ * 골격(헤더 + 필터 + 카드 N개)을 회색 placeholder로 미리 보여줘서 자리 잡고
+ * 실제 데이터가 채워지는 흐름.
  *
- * 도입 이유:
- * - 사용자 제보: '환자 상세에서 뒤로가기 누르면 반응이 느림. 로딩 화면 있으면 좋겠음'
- * - 뒤로가기 = / (Server Component) 재진입 → 서버에서 patients/profile/latestDates
- *   다시 fetch하는 동안 시각 피드백이 0이라 사용자가 "안 눌렸다"고 느낌.
+ * `app/<route>/loading.tsx`가 더 specific하면 그 파일이 우선.
  */
 export default function Loading() {
-  return <LoadingScreen fullScreen />
+  return <PatientListSkeleton cardCount={6} />
 }
