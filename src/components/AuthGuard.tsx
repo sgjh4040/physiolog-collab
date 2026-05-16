@@ -13,7 +13,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const checkAuth = async () => {
       const session = await getSession()
-      const isPublicPage = pathname === '/login' || pathname === '/signup'
+      const isPublicPage =
+        pathname === '/login' ||
+        pathname === '/signup' ||
+        pathname === '/splash-capture'
 
       if (!session && !isPublicPage) {
         router.replace('/login')
@@ -27,7 +30,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname])
 
-  const isPublicPage = pathname === '/login' || pathname === '/signup'
+  const isPublicPage =
+    pathname === '/login' ||
+    pathname === '/signup' ||
+    pathname === '/splash-capture'
 
   // 로딩 상태이거나 로그인하지 않은 경우 화면을 보여주지 않음 (깜빡임 방지)
   if (!isVerified && !isPublicPage) {

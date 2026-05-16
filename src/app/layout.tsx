@@ -20,13 +20,41 @@ export const metadata: Metadata = {
   title: "physiolog — 물리치료 차팅",
   description: "정확한 평가는 치료의 가장 정직한 지도가 됩니다.",
   // iOS PWA 메타 — manifest background_color를 안 따르는 iOS를 위해.
-  // startupImage는 의도적으로 빼놓음: 정적 splash와 AuthGuard splash가
-  // 동시에 보이면서 텍스트 겹쳐 보이는 문제(2026-05-14 사용자 폰 검증)로 제거.
-  // viewport.themeColor 다크로 frame만 메우고, 텍스트는 AuthGuard splash 단독.
+  // startupImage: 자동 캡처된 splash PNG 5종(iPhone SE ~ 15 Pro Max). iOS는
+  // media query로 device pixel 매칭. 빌드는 scripts/capture-splash.cjs로 재생성.
+  // AuthGuard splash와 동일 디자인이라 OS-level splash → AuthGuard splash 전환이
+  // 매끄러움(2026-05-14 텍스트 겹침 문제는 디자인 톤 통일로 해소).
   appleWebApp: {
     capable: true,
     title: "physiolog",
     statusBarStyle: "black-translucent",
+    startupImage: [
+      {
+        url: "/splash/apple-splash-1290x2796.png",
+        media:
+          "(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)",
+      },
+      {
+        url: "/splash/apple-splash-1179x2556.png",
+        media:
+          "(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)",
+      },
+      {
+        url: "/splash/apple-splash-1170x2532.png",
+        media:
+          "(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)",
+      },
+      {
+        url: "/splash/apple-splash-1125x2436.png",
+        media:
+          "(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)",
+      },
+      {
+        url: "/splash/apple-splash-750x1334.png",
+        media:
+          "(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)",
+      },
+    ],
   },
 };
 
