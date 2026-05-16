@@ -5,9 +5,10 @@
 | | |
 |---|---|
 | **라이브 데모** | https://physiolog-collab.vercel.app |
+| **평가용 계정** | `baseline-test@physiolog.local` / `Test1234!` (또는 [카카오로 로그인]) |
+| **GitHub** | https://github.com/sgjh4040/physiolog-collab (33+ commit · PDCA 트레이스) |
+| **시연 영상** | 본 zip과 별도 첨부 |
 | **핵심 KPI** | 1인당 환자 차팅 시간 10~20분 → **5분 이내** |
-| **개발 규모** | 98 commit / 1681줄 풀 임상 시드 / 162줄 ICF 시스템 프롬프트 |
-| **사전 평가** | AI 심사관 종합 **9.18 / 10 (A+)** — [상세](./docs/evaluations/2026-05-14-ai-judge-evaluation.md) |
 | **상태** | 친구(실사용 물리치료사) 인계 직전 / Vercel prod READY |
 
 ---
