@@ -2,16 +2,18 @@ import { z } from 'zod'
 
 const sideEnum = z.enum(['left', 'right', 'both'])
 
+// side는 cervical/lumbar 같은 중앙 부위 굴곡·신전에서 의미가 약해 optional.
+// 어깨/팔/다리 ROM·MMT는 UI에서 side 선택 유도되지만 도메인 강제는 아님.
 export const romRecordSchema = z.object({
   jointId: z.string().min(1),
-  side: sideEnum,
+  side: sideEnum.optional(),
   active: z.number().optional(),
   passive: z.number().optional(),
 })
 
 export const mmtRecordSchema = z.object({
   jointId: z.string().min(1),
-  side: sideEnum,
+  side: sideEnum.optional(),
   grade: z.number().int().min(0).max(5),
 })
 
