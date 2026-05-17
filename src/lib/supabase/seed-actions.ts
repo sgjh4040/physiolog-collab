@@ -57,6 +57,7 @@ async function insertSeedBundle(
       other_medical_history: bundle.patient.otherMedicalHistory,
       diagnosis: bundle.patient.diagnosis,
       surgery_history: bundle.patient.surgeryHistory,
+      onset_date: bundle.patient.onsetDate || null,
       insurance: bundle.patient.insurance,
       notes: bundle.patient.notes,
       treatment_start_date: bundle.patient.treatmentStartDate,

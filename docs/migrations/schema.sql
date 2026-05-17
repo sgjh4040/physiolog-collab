@@ -85,6 +85,7 @@ CREATE TABLE IF NOT EXISTS public.patients (
   other_medical_history text,
   diagnosis text,
   surgery_history text,
+  onset_date date,
   insurance text,
   notes text,
   treatment_start_date date,
@@ -99,6 +100,7 @@ ALTER TABLE public.patients ADD COLUMN IF NOT EXISTS referral_route text;
 ALTER TABLE public.patients ADD COLUMN IF NOT EXISTS medical_history jsonb;
 ALTER TABLE public.patients ADD COLUMN IF NOT EXISTS other_medical_history text;
 ALTER TABLE public.patients ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'new';
+ALTER TABLE public.patients ADD COLUMN IF NOT EXISTS onset_date date;
 
 ALTER TABLE public.patients ENABLE ROW LEVEL SECURITY;
 

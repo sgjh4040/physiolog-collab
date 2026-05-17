@@ -38,6 +38,7 @@ export function EditPatientView({ patient }: Props) {
     otherMedicalHistory: patient.otherMedicalHistory ?? '',
     diagnosis: patient.diagnosis,
     surgeryHistory: patient.surgeryHistory ?? '',
+    onsetDate: patient.onsetDate ?? '',
     insurance: patient.insurance,
     notes: patient.notes ?? '',
     treatmentStartDate: patient.treatmentStartDate,

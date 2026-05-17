@@ -26,6 +26,7 @@ export type Patient = {
   otherMedicalHistory?: string // 기타 과거력 (텍스트)
   diagnosis: string
   surgeryHistory?: string
+  onsetDate?: string           // ISO yyyy-mm-dd — 다친/아프기 시작한 날 (만성·선천성은 비울 수 있음)
   insurance: InsuranceType
   notes?: string               // 특이사항/금기사항
   treatmentStartDate: string   // ISO yyyy-mm-dd

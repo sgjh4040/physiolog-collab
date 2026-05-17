@@ -51,6 +51,7 @@ const EMPTY_DEFAULTS: PatientFormValues = {
   otherMedicalHistory: '',
   diagnosis: '',
   surgeryHistory: '',
+  onsetDate: '',
   insurance: 'health',
   notes: '',
   treatmentStartDate: toISODate(),
@@ -287,6 +288,20 @@ export function PatientForm({
                     {...field}
                   />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="onsetDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>발병일</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <p className="text-xs text-muted-foreground">다친/아프기 시작한 날 (만성·선천성은 비워두세요)</p>
                 <FormMessage />
               </FormItem>
             )}

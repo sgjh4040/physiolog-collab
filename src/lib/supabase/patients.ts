@@ -22,6 +22,7 @@ type PatientRow = {
   other_medical_history: string | null
   diagnosis: string | null
   surgery_history: string | null
+  onset_date: string | null
   insurance: InsuranceType | null
   notes: string | null
   treatment_start_date: string | null
@@ -87,6 +88,7 @@ export async function createPatient(input: PatientInput): Promise<{ success: boo
       other_medical_history: input.otherMedicalHistory,
       diagnosis: input.diagnosis,
       surgery_history: input.surgeryHistory,
+      onset_date: input.onsetDate || null,
       insurance: input.insurance,
       notes: input.notes,
       treatment_start_date: input.treatmentStartDate,
@@ -124,6 +126,7 @@ export async function updatePatient(id: string, updates: Partial<PatientInput>):
   if ('otherMedicalHistory' in updates) dbUpdates.other_medical_history = updates.otherMedicalHistory ?? null
   if ('diagnosis' in updates) dbUpdates.diagnosis = updates.diagnosis ?? null
   if ('surgeryHistory' in updates) dbUpdates.surgery_history = updates.surgeryHistory ?? null
+  if ('onsetDate' in updates) dbUpdates.onset_date = updates.onsetDate || null
   if ('insurance' in updates) dbUpdates.insurance = updates.insurance ?? null
   if ('notes' in updates) dbUpdates.notes = updates.notes ?? null
   if ('treatmentStartDate' in updates) dbUpdates.treatment_start_date = updates.treatmentStartDate ?? null
@@ -182,6 +185,7 @@ function dbToPatient(dbRecord: PatientRow): Patient {
     otherMedicalHistory: dbRecord.other_medical_history ?? undefined,
     diagnosis: dbRecord.diagnosis ?? '',
     surgeryHistory: dbRecord.surgery_history ?? undefined,
+    onsetDate: dbRecord.onset_date ?? undefined,
     insurance: (dbRecord.insurance ?? 'none') as InsuranceType,
     notes: dbRecord.notes ?? undefined,
     treatmentStartDate: dbRecord.treatment_start_date ?? '',

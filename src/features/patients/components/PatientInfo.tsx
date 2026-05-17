@@ -33,6 +33,7 @@ export function PatientInfo({ patient }: Props) {
         full
         multiline
       />
+      <Field label="발병일" value={patient.onsetDate ? formatDate(patient.onsetDate) : '-'} />
       <Field label="치료 시작일" value={formatDate(patient.treatmentStartDate)} />
       <Field label="보험 유형" value={INSURANCE_LABEL[patient.insurance]} />
       <Field label="담당 치료사" value={patient.therapist} />
