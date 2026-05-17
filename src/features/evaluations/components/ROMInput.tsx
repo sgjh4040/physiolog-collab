@@ -54,7 +54,13 @@ export function ROMInput() {
                     }
                   >
                     <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="관절·동작 선택" />
+                      {movement ? (
+                        <span className="truncate">
+                          {movement.joint.label} {movement.movement.label}
+                        </span>
+                      ) : (
+                        <SelectValue placeholder="관절·동작 선택" />
+                      )}
                     </SelectTrigger>
                     <SelectContent>
                       {JOINTS.map((joint) => (

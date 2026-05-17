@@ -41,7 +41,8 @@ export function extractGraphOptions(evaluations: Evaluation[]): GraphOption[] {
       const side = r.side ?? 'both'
       if (typeof r.active === 'number') {
         const mv = getMovementById(r.jointId)
-        const label = `ROM ${side !== 'both' ? SIDE_LABEL[side] + ' ' : ''}${mv?.movement.label ?? r.jointId} (능동)`
+        const jointMov = mv ? `${mv.joint.label} ${mv.movement.label}` : r.jointId
+        const label = `ROM ${side !== 'both' ? SIDE_LABEL[side] + ' ' : ''}${jointMov} (능동)`
         push({
           key: `rom:${r.jointId}:${side}:active`,
           metric: { kind: 'rom', jointId: r.jointId, side, mode: 'active' },
@@ -50,7 +51,8 @@ export function extractGraphOptions(evaluations: Evaluation[]): GraphOption[] {
       }
       if (typeof r.passive === 'number') {
         const mv = getMovementById(r.jointId)
-        const label = `ROM ${side !== 'both' ? SIDE_LABEL[side] + ' ' : ''}${mv?.movement.label ?? r.jointId} (수동)`
+        const jointMov = mv ? `${mv.joint.label} ${mv.movement.label}` : r.jointId
+        const label = `ROM ${side !== 'both' ? SIDE_LABEL[side] + ' ' : ''}${jointMov} (수동)`
         push({
           key: `rom:${r.jointId}:${side}:passive`,
           metric: { kind: 'rom', jointId: r.jointId, side, mode: 'passive' },
@@ -65,7 +67,8 @@ export function extractGraphOptions(evaluations: Evaluation[]): GraphOption[] {
     for (const m of e.mmt ?? []) {
       const side = m.side ?? 'both'
       const mv = getMovementById(m.jointId)
-      const label = `MMT ${side !== 'both' ? SIDE_LABEL[side] + ' ' : ''}${mv?.movement.label ?? m.jointId}`
+      const jointMov = mv ? `${mv.joint.label} ${mv.movement.label}` : m.jointId
+      const label = `MMT ${side !== 'both' ? SIDE_LABEL[side] + ' ' : ''}${jointMov}`
       push({
         key: `mmt:${m.jointId}:${side}`,
         metric: { kind: 'mmt', jointId: m.jointId, side },
