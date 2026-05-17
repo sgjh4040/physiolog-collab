@@ -20,7 +20,7 @@ const STATUS_ORDER: Record<Patient['status'], number> = {
  *   - name        — 가나다순 (ko collation)
  *   - status      — 신규 → 재입원 → 홀드 → 종결
  *   - recent      — 마지막 치료일 DESC, 동일 날짜는 created_at(ts) DESC,
- *                   치료 기록 없는 환자는 맨 아래
+ *                   치료 기록 없는 환자(신규 등록 등)는 맨 위 — 그들끼리는 환자 등록일 DESC
  *   - created     — 환자 등록일 DESC
  *
  * 순수 함수 — Vitest 단위 테스트 가능. (입력 mutation 없음, lookup map 참조만.)
@@ -58,9 +58,11 @@ export function filterAndSortPatients(
     if (sortBy === 'recent') {
       const infoA = latestByPatient[a.id]
       const infoB = latestByPatient[b.id]
-      if (!infoA && !infoB) return 0
-      if (!infoA) return 1
-      if (!infoB) return -1
+      // 치료 기록 없는 환자는 맨 위 — 신규 등록 직후 바로 보이도록.
+      // 둘 다 기록 없으면 환자 등록일 DESC.
+      if (!infoA && !infoB) return b.createdAt.localeCompare(a.createdAt)
+      if (!infoA) return -1
+      if (!infoB) return 1
       const dateDiff = infoB.date.localeCompare(infoA.date)
       if (dateDiff !== 0) return dateDiff
       return infoB.createdAt.localeCompare(infoA.createdAt)

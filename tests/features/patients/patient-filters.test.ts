@@ -93,15 +93,32 @@ describe('filterAndSortPatients', () => {
       expect(r.map((p) => p.id)).toEqual(['y', 's', 'b', 'd'])
     })
 
-    it('recent — 마지막 치료일 DESC, 치료 기록 없는 환자는 맨 아래', () => {
+    it('recent — 치료 기록 없는 환자가 맨 위, 그 다음 마지막 치료일 DESC', () => {
       const latestByPatient: Record<string, LatestTreatmentInfo> = {
         s: makeLatest('2026-05-13', '2026-05-13T10:00:00Z'),
         y: makeLatest('2026-05-12', '2026-05-12T10:00:00Z'),
         b: makeLatest('2026-05-12', '2026-05-12T14:00:00Z'), // 같은 날, 더 늦은 시각
       }
       const r = filterAndSortPatients(all, { ...baseOpts, sortBy: 'recent', latestByPatient })
-      expect(r.map((p) => p.id)).toEqual(['s', 'b', 'y', 'd'])
-      // 's' 가장 최근일, 'b' vs 'y' 같은 날이지만 'b'가 더 늦은 시각 → 'b' 위, 'd' 치료기록 없으므로 맨 아래
+      // 'd'는 치료기록 없으니 맨 위, 이어 's' 가장 최근일,
+      // 'b' vs 'y' 같은 날이지만 'b'가 더 늦은 시각 → 'b' 위
+      expect(r.map((p) => p.id)).toEqual(['d', 's', 'b', 'y'])
+    })
+
+    it('recent — 치료 기록 없는 환자가 여럿이면 그들끼리는 등록일 DESC', () => {
+      const noTreatA = makePatient({ id: 'na', name: '신규A', status: 'new', createdAt: '2026-05-10T00:00:00Z' })
+      const noTreatB = makePatient({ id: 'nb', name: '신규B', status: 'new', createdAt: '2026-05-15T00:00:00Z' })
+      const treated = makePatient({ id: 't', name: '치료환자', status: 'new', createdAt: '2026-01-01T00:00:00Z' })
+      const latestByPatient: Record<string, LatestTreatmentInfo> = {
+        t: makeLatest('2026-05-01', '2026-05-01T10:00:00Z'),
+      }
+      const r = filterAndSortPatients([treated, noTreatA, noTreatB], {
+        ...baseOpts,
+        sortBy: 'recent',
+        latestByPatient,
+      })
+      // 신규B(2026-05-15) → 신규A(2026-05-10) → 치료환자
+      expect(r.map((p) => p.id)).toEqual(['nb', 'na', 't'])
     })
   })
 
