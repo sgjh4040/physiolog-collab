@@ -35,7 +35,7 @@ const EMPTY_DEFAULTS: EvaluationFormValues = {
   mmt: [],
   toggleMeasurement: false,
   measurement: [],
-  togglePainMapping: true,
+  togglePainMapping: false,
   painMapping: [],
   toggleCustom: false,
   custom: [],
@@ -64,11 +64,14 @@ export function EvaluationForm({
 
   const errors = form.formState.errors
 
-  // 통증 부위가 1개 이상이면 가장 아픈 강도(max)를 vas로 자동 산출.
-  // 빈 배열이면 0 (통증 없음). 결과는 onSubmit 콜백으로 그대로 흘러가 caller가 DB에 저장.
+  // VAS 자동 산출 규칙:
+  // - 통증 토글 OFF → vas undefined (= "측정 안 함", 그래프에 점 안 찍힘)
+  // - 통증 토글 ON + 부위 1개 이상 → 가장 아픈 강도(max)
+  // - 통증 토글 ON + 부위 0개 → 0 ("통증 측정했지만 부위 없음" = VAS 0 의미)
   const submitWithVas = (values: EvaluationFormValues) => {
-    const computedVas =
-      values.painMapping.length > 0
+    const computedVas = !values.togglePainMapping
+      ? undefined
+      : values.painMapping.length > 0
         ? Math.max(...values.painMapping.map((p) => p.intensity))
         : 0
     return onSubmit({ ...values, vas: computedVas })
@@ -142,7 +145,6 @@ export function EvaluationForm({
           title="통증"
           subtitle="통증 부위 및 양상 — VAS는 자동 산출"
           name="togglePainMapping"
-          required
         >
           <BodyMap
             value={form.watch('painMapping')}
