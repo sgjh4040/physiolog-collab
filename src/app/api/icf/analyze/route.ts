@@ -18,6 +18,9 @@ interface ApiMessage {
 const MODEL_ID = 'claude-sonnet-4-6'
 const MAX_RETRY = 1 // 응답 형식 오류 시 1회 재시도
 
+// Vercel Fluid Compute 콜드스타트 + Claude 호출 누적 시간 대비. 기본 10s는 부족.
+export const maxDuration = 60
+
 /**
  * Claude 응답 텍스트에서 첫 번째 JSON 객체만 추출.
  * - balanced-brace 카운팅으로 첫 `{`부터 짝맞는 `}`까지만 잡음
@@ -62,7 +65,7 @@ async function analyzeOnce(
 ): Promise<{ result: ReturnType<typeof icfAnalysisResultSchema.parse>; rawText: string }> {
   const response = await client.messages.create({
     model: MODEL_ID,
-    max_tokens: 2048,
+    max_tokens: 4096, // 한국어 + 시계열 cross-reference 시 2048 초과 가능 → 응답 잘림 방지
     system: systemPrompt,
     messages,
   })

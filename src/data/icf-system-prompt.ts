@@ -141,7 +141,6 @@ export const ICF_SYSTEM_PROMPT = `당신은 물리치료사와 스포츠 트레�
 - 추이가 **정체(stable)**나 **악화(worsening)**면 \`followUpQuestion\`을 통해 원인 탐색 방향을 제시.
 - \`missingOrWeak\`에 시계열이 \*\*기록되지 않은 차원\*\*(예: ROM 추이는 있는데 MMT는 단발)을 명시할 수 있음.
 
-\`\`\`
 {
   "domains": {
     "body": [],
@@ -158,7 +157,6 @@ export const ICF_SYSTEM_PROMPT = `당신은 물리치료사와 스포츠 트레�
   "followUpQuestion": "치료사가 추가로 생각해볼 질문 1개 (환경 또는 참여 영역 우선)",
   "clinicalNote": "가설 → 근거 → 다음 단계 순서로 3줄 이내 요약"
 }
-\`\`\`
 
 ## 원칙
 - ICF 코드(b730, d450 등) 사용 금지 — 철학적 프레임워크만 활용
