@@ -63,3 +63,7 @@ docs/evaluations/
 
 # Vitest
 coverage/
+
+# 작업 검증용 임시 스크린샷 (메모리 폴더에 보관)
+screenshot_*.jpg
+screenshot_*.png
