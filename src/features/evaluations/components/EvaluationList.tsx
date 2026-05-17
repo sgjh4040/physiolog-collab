@@ -2,9 +2,23 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ClipboardList, Plus } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { ClipboardList, Copy, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 import { EvaluationCard } from './EvaluationCard'
 import { EvaluationChart } from './EvaluationChart'
 import { EvaluationDetailSheet } from './EvaluationDetailSheet'
@@ -13,6 +27,7 @@ import { evaluationStore } from '@/lib/storage'
 import { getEvaluations, deleteEvaluation } from '@/lib/supabase/evaluations'
 import { useConfirm } from '@/components/confirm-dialog'
 import { LoadingScreen } from '@/components/loading-screen'
+import { formatDateShort } from '@/lib/utils/date'
 import type {
   Evaluation,
   GraphMetric,
@@ -33,6 +48,8 @@ export function EvaluationList({ patientId, initialEvaluations }: Props) {
 
   const [isSelectionMode, setIsSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [openCopyPopover, setOpenCopyPopover] = useState(false)
+  const router = useRouter()
   const confirm = useConfirm()
 
   // 삭제 등 mutation 후 최신 데이터 동기화용. 첫 로드는 server에서 처리됨.
@@ -145,11 +162,51 @@ export function EvaluationList({ patientId, initialEvaluations }: Props) {
           
           <div className="flex gap-2">
             {hasAny && !isSelectionMode && (
-              <Button variant="ghost" size="sm" onClick={toggleSelectionMode} className="text-xs h-8">
-                선택
-              </Button>
+              <>
+                <Button variant="ghost" size="sm" onClick={toggleSelectionMode} className="text-xs h-8">
+                  선택
+                </Button>
+                <Popover open={openCopyPopover} onOpenChange={setOpenCopyPopover}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Copy className="mr-1 h-4 w-4" />이전 기록 복사
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[280px] p-0" align="end">
+                    <Command>
+                      <CommandInput placeholder="날짜 검색..." />
+                      <CommandList>
+                        <CommandEmpty>기록이 없습니다.</CommandEmpty>
+                        <CommandGroup heading="복사할 기록 선택">
+                          {evaluations.map((e) => (
+                            <CommandItem
+                              key={e.id}
+                              value={e.date}
+                              onSelect={() => {
+                                router.push(
+                                  `/patients/${patientId}/evaluations/new?copyFrom=${e.id}`,
+                                )
+                                setOpenCopyPopover(false)
+                              }}
+                            >
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-sm font-medium">
+                                  {formatDateShort(e.date)}
+                                </span>
+                                <span className="text-xs text-muted-foreground truncate">
+                                  {summarizeEvaluation(e) || '항목 없음'}
+                                </span>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </>
             )}
-            
+
             {isSelectionMode && (
               <>
                 <Button variant="ghost" size="sm" onClick={toggleSelectionMode} className="text-xs h-8">
@@ -210,4 +267,16 @@ export function EvaluationList({ patientId, initialEvaluations }: Props) {
       />
     </div>
   )
+}
+
+// 복사 후보 리스트의 식별 보조 텍스트 — 어떤 측정 항목을 담았는지 한 줄 요약.
+function summarizeEvaluation(e: Evaluation): string {
+  const parts: string[] = []
+  if (typeof e.vas === 'number') parts.push(`VAS ${e.vas}`)
+  if (e.rom && e.rom.length > 0) parts.push(`ROM ${e.rom.length}`)
+  if (e.mmt && e.mmt.length > 0) parts.push(`MMT ${e.mmt.length}`)
+  if (e.bodyMeasurement && e.bodyMeasurement.length > 0)
+    parts.push(`계측 ${e.bodyMeasurement.length}`)
+  if (e.custom && e.custom.length > 0) parts.push(`커스텀 ${e.custom.length}`)
+  return parts.join(' · ')
 }
